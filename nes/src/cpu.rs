@@ -1,11 +1,5 @@
-pub struct CPU {
-    pub register_a: u8,
-    pub register_x: u8,
-    pub register_y: u8,
-    pub status: u8,
-    pub program_counter: u16,
-    memory: [u8; 0xFFFF]
-}
+use std::collections::HashMap;
+use crate::opcodes;
 
 #[derive(Debug)]
 #[allow(non_camel_case_types)]
@@ -19,10 +13,21 @@ pub enum AddressingMode {
     Absolute_Y,
     Indirect_X,
     Indirect_Y,
-    NoneAdressing,
+    NoneAddressing,
+}
+
+pub struct CPU {
+    pub register_a: u8,
+    pub register_x: u8,
+    pub register_y: u8,
+    pub status: u8,
+    pub program_counter: u16,
+    memory: [u8; 0xFFFF]
 }
 
 impl CPU {
+
+
     pub fn new() -> Self {
         CPU {
             register_a: 0,
@@ -112,6 +117,7 @@ impl CPU {
     }
 
     fn incx(&mut self){
+        dbg!("Running INCX");
         self.register_x = self.register_x.wrapping_add(1);
         self.update_zero_and_negative_flags(self.register_x);
     }
@@ -180,56 +186,56 @@ impl CPU {
                 let deref = deref_base.wrapping_add(self.register_y as u16);
                 deref
             } 
-            AddressingMode::NoneAdressing => {
+            AddressingMode::NoneAddressing => {
                 panic!("mode {:?} is not supported", mode)
             }
         }
     }
 
     pub fn run(&mut self) {
+        let ref opcodes: HashMap<u8, &'static opcodes::OpCode> = *opcodes::OPCODES_MAP;
+
+
         loop {
             println!("Entered loop");
             let code = self.mem_read(self.program_counter);
             dbg!(code);
             self.program_counter += 1;
+            // let program_counter_state = self.program_counter;
 
-            match code {
-                /* LDA */
-                0xA9 => {
-                    self.lda(&AddressingMode::Immediate);
-                    self.program_counter += 1;
+            let opcode = opcodes.get(&code).expect(&format!("OpCode {:x} is not recognized", code));
+            dbg!(opcode);
+
+            match opcode.mneumonic {
+                "LDA" => {
+                    self.lda(&opcode.mode);
                 }
-                0xA5 => {
-                    self.lda(&AddressingMode::ZeroPage);
-                    self.program_counter += 1;
+
+                "STA" => {
+                    self.sta(&opcode.mode);
                 }
-                0xAD => {
-                    self.lda(&AddressingMode::Absolute);
-                    self.program_counter += 1;
-                }
-                /* STA */
-                0x85 => {
-                    self.sta(&AddressingMode::ZeroPage);
-                    self.program_counter += 1;
-                }
-                0x95 => {
-                    self.sta(&AddressingMode::ZeroPage_X);
-                    self.program_counter += 1;
-                }
+
                 /* TAX */
-                0xAA => {
+                "TAX" => {
                     self.tax();
                 }
-                /* INCX */
-                0xE8 => {
+                "INCX" => {
                     self.incx();
                 }
-                0x00 => {
+
+                "BRK" => {
                     return;
                 }
 
                 _ => todo!(),
             }
+
+            /* The reference saves the program_counter state
+            if program_counter_state == self.program_counter {
+                self.program_counter += (opcode.len - 1) as u16;
+            } */
+            self.program_counter += (opcode.len - 1) as u16;
+
         }
     }
 }
