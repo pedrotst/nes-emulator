@@ -39,11 +39,11 @@ impl CPU {
         }
     }
 
-    fn mem_read(&self, addr: u16) -> u8 {
+    pub fn mem_read(&self, addr: u16) -> u8 {
         self.memory[addr as usize]
     }
 
-    fn mem_write(&mut self, addr: u16, data: u8) {
+    pub fn mem_write(&mut self, addr: u16, data: u8) {
         self.memory[addr as usize] = data;
     }
 
@@ -242,75 +242,4 @@ impl CPU {
 
 #[cfg(test)]
 mod test {
-    use super::*;
-
-    #[test]
-    fn test_0xa9_lda_immediate_load_data() {
-        let mut cpu = CPU::new();
-        cpu.load_and_run(vec![0xa9, 0x05, 0x00]);
-        assert!(cpu.status & 0b0000_0010 == 0b00);
-        assert!(cpu.status & 0b1000_0000 == 0);
-    }
-
-    #[test]
-    fn test_0xaa_tax_move_a_to_x() {
-        let mut cpu = CPU::new();
-        cpu.register_a = 10;
-        cpu.load_and_run_no_reset(vec![0xaa, 0x00]);
-
-        assert_eq!(cpu.register_x, 10);
-        assert!(cpu.status & 0b0000_0010 == 0b00);
-        assert!(cpu.status & 0b1000_0000 == 0b00);
-    }
-
-    #[test]
-    fn test_0xa9_lda_zero_flag() {
-        let mut cpu = CPU::new();
-        cpu.load_and_run(vec![0xa9, 0x00, 0x00]);
-        assert!(cpu.status & 0b0000_0010 == 0b10);
-        assert!(cpu.status & 0b1000_0000 == 0b00);
-    }
-
-    #[test]
-    fn test5_inx_overflow() {
-        let mut cpu = CPU::new();
-        cpu.register_x = 0xff;
-        cpu.load_and_run_no_reset(vec![0xe8, 0xe8, 0x00]);
-        assert_eq!(cpu.register_x, 1);
-    }
-
-    #[test]
-    fn test_5_ops_working_together(){
-        let mut cpu = CPU::new();
-        cpu.load_and_run(vec![0xa9, 0xc0, 0xaa, 0xe8, 0x00]);
-
-        assert_eq!(cpu.register_x, 0xc1);
-    }
-
-    #[test]
-    fn test_lda_from_memory() {
-        let mut cpu = CPU::new();
-        cpu.mem_write(0x10, 0x55);
-        cpu.load_and_run(vec![0xa5, 0x10, 0x00]);
-        assert_eq!(cpu.register_a, 0x55);
-    }
-
-    #[test]
-    fn test_sta_zero_page() {
-        let mut cpu = CPU::new();
-        cpu.register_a = 0x55;
-        cpu.load_and_run_no_reset(vec![0x85, 0x10, 0x00]);
-        let x = cpu.mem_read(0x10);
-        assert_eq!(x, 0x55);
-    }
-    #[test]
-    fn test_sta_zero_page_x() {
-        let mut cpu = CPU::new();
-        cpu.register_a = 0x55;
-        cpu.register_x = 0x01;
-        cpu.load_and_run_no_reset(vec![0x95, 0x10, 0x00]);
-        // Writes to memory 0x10 of argument + reg_x = 0x11
-        let x = cpu.mem_read(0x11);
-        assert_eq!(x, 0x55);
-    }
 }
