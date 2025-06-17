@@ -47,7 +47,7 @@ impl CPU {
         self.memory[addr as usize] = data;
     }
 
-    fn mem_read_u16(&mut self, pos: u16) -> u16 {
+    pub fn mem_read_u16(&mut self, pos: u16) -> u16 {
         let lo = self.mem_read(pos) as u16;
         let hi = self.mem_read(pos+1) as u16;
         (hi << 8) | (lo as u16)
@@ -93,22 +93,60 @@ impl CPU {
 
 
     fn lda(&mut self, mode: &AddressingMode) {
-        println!("Running lda");
+        dbg!("Running lda");
         let addr = self.get_operand_address(mode);
         let value = self.mem_read(addr);
-        println!("addr = {addr}");
-        println!("value = {value}");
+        dbg!(addr);
+        dbg!(value);
 
         self.register_a = value;
         self.update_zero_and_negative_flags(self.register_a);
     }
 
+    fn ldx(&mut self, mode: &AddressingMode) {
+        dbg!("Running ldx");
+        let addr = self.get_operand_address(mode);
+        let value = self.mem_read(addr);
+        dbg!(addr);
+        dbg!(value);
+
+        self.register_x = value;
+        self.update_zero_and_negative_flags(self.register_x);
+    }
+
+    fn ldy(&mut self, mode: &AddressingMode) {
+        dbg!("Running ldy");
+        let addr = self.get_operand_address(mode);
+        let value = self.mem_read(addr);
+        dbg!(addr);
+        dbg!(value);
+
+        self.register_y = value;
+        self.update_zero_and_negative_flags(self.register_y);
+    }
+
     fn sta(&mut self, mode: &AddressingMode){
-        // println!("Running STA");
+        dbg!("Running STA");
         let addr = self.get_operand_address(mode);
         dbg!(addr);
 
         self.mem_write(addr, self.register_a);
+    }
+
+    fn stx(&mut self, mode: &AddressingMode){
+        dbg!("Running STX");
+        let addr = self.get_operand_address(mode);
+        dbg!(addr);
+
+        self.mem_write(addr, self.register_x);
+    }
+
+    fn sty(&mut self, mode: &AddressingMode){
+        dbg!("Running STY");
+        let addr = self.get_operand_address(mode);
+        dbg!(addr);
+
+        self.mem_write(addr, self.register_y);
     }
 
     fn tax(&mut self) {
@@ -116,10 +154,31 @@ impl CPU {
         self.update_zero_and_negative_flags(self.register_x);
     }
 
-    fn incx(&mut self){
-        dbg!("Running INCX");
-        self.register_x = self.register_x.wrapping_add(1);
+    fn inx(&mut self){
+        dbg!("Running INX");
+        let (x, overflowed) = self.register_x.overflowing_add(1);
+        self.register_x = x;
+        dbg!(overflowed);
+        self.update_overflowed(overflowed);
         self.update_zero_and_negative_flags(self.register_x);
+    }
+
+    fn dex(&mut self){
+        dbg!("Running DEX");
+        let (x, overflowed) = self.register_x.overflowing_sub(1);
+        self.register_x = x;
+        self.update_overflowed(overflowed);
+        self.update_zero_and_negative_flags(self.register_x);
+    }
+
+    fn update_overflowed(&mut self, flag: bool) {
+        if flag {
+            println!("Overflowed!");
+            self.status = self.status | 0b0100_0000;
+        }
+        else{
+            self.status = self.status & 0b1011_1111;
+        }
     }
 
     fn update_zero_and_negative_flags(&mut self, result: u8) {
@@ -210,17 +269,34 @@ impl CPU {
                 "LDA" => {
                     self.lda(&opcode.mode);
                 }
+                "LDX" => {
+                    self.ldx(&opcode.mode);
+                }
+                "LDY" => {
+                    self.ldy(&opcode.mode);
+                }
 
                 "STA" => {
                     self.sta(&opcode.mode);
                 }
 
-                /* TAX */
+                "STX" => {
+                    self.stx(&opcode.mode);
+                }
+
+                "STY" => {
+                    self.sty(&opcode.mode);
+                }
+
                 "TAX" => {
                     self.tax();
                 }
-                "INCX" => {
-                    self.incx();
+
+                "INX" => {
+                    self.inx();
+                }
+                "DEX" => {
+                    self.dex();
                 }
 
                 "BRK" => {

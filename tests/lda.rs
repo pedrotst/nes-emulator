@@ -9,6 +9,13 @@ fn lda_0xa9_immediate_load_data() {
 }
 
 #[test]
+fn lda_0xa9_immediate() {
+    let mut cpu = CPU::new();
+    cpu.load_and_run(vec![0xa9, 0x55, 0x00]);
+    assert_eq!(cpu.register_a, 0x55);
+}
+
+#[test]
 fn lda_0xa9_zero_flag() {
     let mut cpu = CPU::new();
     cpu.load_and_run(vec![0xa9, 0x00, 0x00]);
