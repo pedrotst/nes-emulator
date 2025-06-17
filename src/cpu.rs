@@ -301,7 +301,17 @@ impl CPU {
         dbg!("Running AND");
         let addr = self.get_operand_address(mode);
         let data = self.mem_read(addr);
-        self.register_a = data & self.register_a;
+        self.register_a &= data;
+
+        self.update_zero_flag(self.register_a);
+        self.update_negative_flag(self.register_a);
+    }
+
+    fn or(&mut self, mode: &AddressingMode){
+        dbg!("Running OR");
+        let addr = self.get_operand_address(mode);
+        let data = self.mem_read(addr);
+        self.register_a |= data;
 
         self.update_zero_flag(self.register_a);
         self.update_negative_flag(self.register_a);
@@ -504,6 +514,10 @@ impl CPU {
                 /* BITWISE */
                 "AND" => {
                     self.and(&opcode.mode);
+                }
+
+                "ORA" => {
+                    self.or(&opcode.mode);
                 }
 
                 /* Break */
