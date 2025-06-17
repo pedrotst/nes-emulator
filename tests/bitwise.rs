@@ -61,3 +61,28 @@ fn test_eor_immediate() {
     assert_eq!(cpu.register_a, 0x0e);
     assert_eq!(cpu.status & 0b1000_0011, 0);
 }
+
+#[test]
+fn test_bit_zero_page() {
+    let mut cpu = CPU::new();
+    cpu.mem_write(0x10, 0xff);
+    cpu.register_a = 0x00;
+    cpu.load_and_run_no_reset(vec![0x24, 0x10, 0x00]);
+    let x = cpu.mem_read(0x10);
+    assert_eq!(x, 0xff);
+    assert_eq!(cpu.register_a & x, 0x00);
+    assert_eq!(cpu.status & 0b1100_0010, 0b1100_0010);
+}
+
+
+#[test]
+fn test_bit_zero_page2() {
+    let mut cpu = CPU::new();
+    cpu.mem_write(0x10, 0xc0);
+    cpu.register_a = 0x00;
+    cpu.load_and_run_no_reset(vec![0x24, 0x10, 0x00]);
+    let x = cpu.mem_read(0x10);
+    assert_eq!(x, 0xc0);
+    assert_eq!(cpu.register_a & x, 0x00);
+    assert_eq!(cpu.status & 0b1100_0010, 0b1100_0010);
+}

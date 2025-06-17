@@ -327,6 +327,19 @@ impl CPU {
         self.update_negative_flag(self.register_a);
     }
 
+    fn bit(&mut self, mode: &AddressingMode){
+        dbg!("Running BIT");
+        let addr = self.get_operand_address(mode);
+        let data = self.mem_read(addr);
+        self.update_zero_flag(self.register_a & data);
+        dbg!(self.status);
+
+        self.status |= data & 0b1100_0000;
+        dbg!(self.status);
+
+    
+    }
+
     fn update_carry_lsb(&mut self, data: u8){
         if data & 0b0000_0001 != 0 {
             byte_utils::set_carry(&mut self.status);
@@ -532,6 +545,10 @@ impl CPU {
 
                 "EOR" => {
                     self.eor(&opcode.mode);
+                }
+
+                "BIT" => {
+                    self.bit(&opcode.mode);
                 }
 
                 /* Break */
