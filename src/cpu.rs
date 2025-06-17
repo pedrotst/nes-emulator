@@ -161,25 +161,21 @@ impl CPU {
 
     fn inx(&mut self){
         dbg!("Running INX");
-        let (x, overflowed) = self.register_x.overflowing_add(1);
-        self.register_x = x;
-        dbg!(overflowed);
-        // self.update_overflowed(overflowed);
+        self.register_x = self.register_x.wrapping_add(1);
+
         self.update_zero_flag(self.register_x);
         self.update_negative_flag(self.register_x);
     }
 
     fn dex(&mut self){
         dbg!("Running DEX");
-        let (x, overflowed) = self.register_x.overflowing_sub(1);
-        self.register_x = x;
+        self.register_x = self.register_x.wrapping_sub(1);
         self.update_zero_flag(self.register_x);
         self.update_negative_flag(self.register_x);
     }
 
     fn update_overflowed(&mut self, flag: bool) {
         if flag {
-            println!("Overflowed!");
             self.status = self.status | 0b0100_0000;
         }
         else{
