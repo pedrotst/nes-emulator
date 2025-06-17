@@ -76,6 +76,13 @@ lazy_static! {
         OpCode::new(0x94, "STY", 2, 4, AddressingMode::ZeroPage_X),
         OpCode::new(0x8C, "STY", 3, 4, AddressingMode::Absolute),
 
+        /* Logical Operations */
+        OpCode::new(0x0A, "ASL_A", 1, 2, AddressingMode::NoneAddressing),
+        OpCode::new(0x46, "ASL", 2, 5, AddressingMode::ZeroPage),
+        OpCode::new(0x56, "ASL", 2, 6, AddressingMode::ZeroPage_X),
+        OpCode::new(0x4E, "ASL", 3, 6, AddressingMode::Absolute),
+        OpCode::new(0x5E, "ASL", 3, 7, AddressingMode::Absolute_X),
+
 
     ];
 

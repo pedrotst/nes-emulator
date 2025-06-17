@@ -207,14 +207,36 @@ impl CPU {
         self.update_negative_flag(self.register_y);
     }
 
-    fn update_overflowed(&mut self, flag: bool) {
-        if flag {
-            self.status = self.status | 0b0100_0000;
+    fn asl_accumulator(&mut self){
+        dbg!("Running ASL_A");
+        self.update_carry(self.register_a);
+
+        self.register_a = self.register_a << 1;
+        self.update_zero_flag(self.register_a);
+        self.update_negative_flag(self.register_a);
+    }
+
+    fn asl(&mut self, mode: &AddressingMode){
+        dbg!("Running ASL");
+        let addr = self.get_operand_address(mode);
+        let mut data = self.mem_read(addr);
+        self.update_carry(data);
+
+        data = data << 1;
+        self.update_zero_flag(data);
+        self.update_negative_flag(data);
+        self.mem_write(addr, data);
+    }
+
+    fn update_carry(&mut self, data: u8){
+        if data & 0b1000_0000 != 0 {
+            byte_utils::set_carry(&mut self.status);
         }
-        else{
-            self.status = self.status & 0b1011_1111;
+        else {
+            byte_utils::unset_carry(&mut self.status);
         }
     }
+
 
     fn update_zero_flag(&mut self, result: u8) {
         if result == 0 {
@@ -282,6 +304,7 @@ impl CPU {
                 let deref = deref_base.wrapping_add(self.register_y as u16);
                 deref
             } 
+
             AddressingMode::NoneAddressing => {
                 panic!("mode {:?} is not supported", mode)
             }
@@ -354,6 +377,15 @@ impl CPU {
                 }
                 "DEY" => {
                     self.dey();
+                }
+
+                /* Logical Operations */
+                "ASL_A" => {
+                    self.asl_accumulator();
+                }
+
+                "ASL" => {
+                    self.asl(&opcode.mode);
                 }
 
                 /* Break */
