@@ -159,6 +159,24 @@ impl CPU {
         self.update_negative_flag(self.register_x);
     }
 
+    fn txa(&mut self) {
+        self.register_a = self.register_x;
+        self.update_zero_flag(self.register_a);
+        self.update_negative_flag(self.register_a);
+    }
+
+    fn tay(&mut self) {
+        self.register_y = self.register_a;
+        self.update_zero_flag(self.register_y);
+        self.update_negative_flag(self.register_y);
+    }
+
+    fn tya(&mut self) {
+        self.register_a = self.register_y;
+        self.update_zero_flag(self.register_a);
+        self.update_negative_flag(self.register_a);
+    }
+
     fn inx(&mut self){
         dbg!("Running INX");
         self.register_x = self.register_x.wrapping_add(1);
@@ -172,6 +190,21 @@ impl CPU {
         self.register_x = self.register_x.wrapping_sub(1);
         self.update_zero_flag(self.register_x);
         self.update_negative_flag(self.register_x);
+    }
+
+    fn iny(&mut self){
+        dbg!("Running INY");
+        self.register_y = self.register_y.wrapping_add(1);
+
+        self.update_zero_flag(self.register_y);
+        self.update_negative_flag(self.register_y);
+    }
+
+    fn dey(&mut self){
+        dbg!("Running DEY");
+        self.register_y = self.register_x.wrapping_sub(1);
+        self.update_zero_flag(self.register_y);
+        self.update_negative_flag(self.register_y);
     }
 
     fn update_overflowed(&mut self, flag: bool) {
@@ -292,8 +325,21 @@ impl CPU {
                     self.sty(&opcode.mode);
                 }
 
+                /* Register Instructions */
                 "TAX" => {
                     self.tax();
+                }
+
+                "TXA" => {
+                    self.txa();
+                }
+
+                "TAY" => {
+                    self.tay();
+                }
+
+                "TYA" => {
+                    self.tya();
                 }
 
                 "INX" => {
@@ -302,6 +348,15 @@ impl CPU {
                 "DEX" => {
                     self.dex();
                 }
+
+                "INY" => {
+                    self.iny();
+                }
+                "DEY" => {
+                    self.dey();
+                }
+
+                /* Break */
 
                 "BRK" => {
                     return;
