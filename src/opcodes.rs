@@ -77,30 +77,40 @@ lazy_static! {
         OpCode::new(0x8C, "STY", 3, 4, AddressingMode::Absolute),
 
         /* Logical Operations */
-        OpCode::new(0x0A, "ASL_A", 1, 2, AddressingMode::NoneAddressing),
+        OpCode::new(0x0A,"ASL_A", 1, 2, AddressingMode::NoneAddressing),
         OpCode::new(0x06, "ASL", 2, 5, AddressingMode::ZeroPage),
         OpCode::new(0x16, "ASL", 2, 6, AddressingMode::ZeroPage_X),
         OpCode::new(0x0E, "ASL", 3, 6, AddressingMode::Absolute),
         OpCode::new(0x1E, "ASL", 3, 7, AddressingMode::Absolute_X),
 
-        OpCode::new(0x4A, "LSR_A", 1, 2, AddressingMode::NoneAddressing),
+        OpCode::new(0x4A,"LSR_A", 1, 2, AddressingMode::NoneAddressing),
         OpCode::new(0x46, "LSR", 2, 5, AddressingMode::ZeroPage),
         OpCode::new(0x56, "LSR", 2, 6, AddressingMode::ZeroPage_X),
         OpCode::new(0x4E, "LSR", 3, 6, AddressingMode::Absolute),
         OpCode::new(0x5E, "LSR", 3, 7, AddressingMode::Absolute_X),
 
-        OpCode::new(0x2A, "ROL_A", 1, 2, AddressingMode::NoneAddressing),
+        OpCode::new(0x2A,"ROL_A", 1, 2, AddressingMode::NoneAddressing),
         OpCode::new(0x26, "ROL", 2, 5, AddressingMode::ZeroPage),
         OpCode::new(0x36, "ROL", 2, 6, AddressingMode::ZeroPage_X),
         OpCode::new(0x2E, "ROL", 3, 6, AddressingMode::Absolute),
         OpCode::new(0x3E, "ROL", 3, 7, AddressingMode::Absolute_X),
 
-        OpCode::new(0x6A, "ROR_A", 1, 2, AddressingMode::NoneAddressing),
+        OpCode::new(0x6A,"ROR_A", 1, 2, AddressingMode::NoneAddressing),
         OpCode::new(0x66, "ROR", 2, 5, AddressingMode::ZeroPage),
         OpCode::new(0x76, "ROR", 2, 6, AddressingMode::ZeroPage_X),
         OpCode::new(0xE6, "ROR", 3, 6, AddressingMode::Absolute),
         OpCode::new(0x7E, "ROR", 3, 7, AddressingMode::Absolute_X),
 
+        /* BITWISE */
+
+        OpCode::new(0x29, "AND", 2, 2,          AddressingMode::Immediate),
+        OpCode::new(0x25, "AND", 2, 3,          AddressingMode::ZeroPage),
+        OpCode::new(0x35, "AND", 2, 4,          AddressingMode::ZeroPage_X),
+        OpCode::new(0x2D, "AND", 3, 4,          AddressingMode::Absolute),
+        OpCode::new(0x3D, "AND", 3, 4 /* +1 */, AddressingMode::Absolute_X),
+        OpCode::new(0x39, "AND", 3, 4 /* +1 */, AddressingMode::Absolute_X),
+        OpCode::new(0x21, "AND", 2, 6,          AddressingMode::Indirect_X),
+        OpCode::new(0x31, "AND", 2, 5 /* +1 */, AddressingMode::Indirect_Y),
 
     ];
 

@@ -297,6 +297,16 @@ impl CPU {
         self.mem_write(addr, data);
     }
 
+    fn and(&mut self, mode: &AddressingMode){
+        dbg!("Running AND");
+        let addr = self.get_operand_address(mode);
+        let data = self.mem_read(addr);
+        self.register_a = data & self.register_a;
+
+        self.update_zero_flag(self.register_a);
+        self.update_negative_flag(self.register_a);
+    }
+
     fn update_carry_lsb(&mut self, data: u8){
         if data & 0b0000_0001 != 0 {
             byte_utils::set_carry(&mut self.status);
@@ -489,6 +499,11 @@ impl CPU {
 
                 "ROR" => {
                     self.ror(&opcode.mode);
+                }
+
+                /* BITWISE */
+                "AND" => {
+                    self.and(&opcode.mode);
                 }
 
                 /* Break */
