@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 use crate::opcodes;
+use crate::byte_utils;
 
 #[derive(Debug)]
 #[allow(non_camel_case_types)]
@@ -100,7 +101,8 @@ impl CPU {
         dbg!(value);
 
         self.register_a = value;
-        self.update_zero_and_negative_flags(self.register_a);
+        self.update_zero_flag(self.register_a);
+        self.update_negative_flag(self.register_a);
     }
 
     fn ldx(&mut self, mode: &AddressingMode) {
@@ -111,7 +113,8 @@ impl CPU {
         dbg!(value);
 
         self.register_x = value;
-        self.update_zero_and_negative_flags(self.register_x);
+        self.update_zero_flag(self.register_x);
+        self.update_negative_flag(self.register_x);
     }
 
     fn ldy(&mut self, mode: &AddressingMode) {
@@ -122,7 +125,8 @@ impl CPU {
         dbg!(value);
 
         self.register_y = value;
-        self.update_zero_and_negative_flags(self.register_y);
+        self.update_zero_flag(self.register_y);
+        self.update_negative_flag(self.register_y);
     }
 
     fn sta(&mut self, mode: &AddressingMode){
@@ -151,7 +155,8 @@ impl CPU {
 
     fn tax(&mut self) {
         self.register_x = self.register_a;
-        self.update_zero_and_negative_flags(self.register_x);
+        self.update_zero_flag(self.register_x);
+        self.update_negative_flag(self.register_x);
     }
 
     fn inx(&mut self){
@@ -159,16 +164,17 @@ impl CPU {
         let (x, overflowed) = self.register_x.overflowing_add(1);
         self.register_x = x;
         dbg!(overflowed);
-        self.update_overflowed(overflowed);
-        self.update_zero_and_negative_flags(self.register_x);
+        // self.update_overflowed(overflowed);
+        self.update_zero_flag(self.register_x);
+        self.update_negative_flag(self.register_x);
     }
 
     fn dex(&mut self){
         dbg!("Running DEX");
         let (x, overflowed) = self.register_x.overflowing_sub(1);
         self.register_x = x;
-        self.update_overflowed(overflowed);
-        self.update_zero_and_negative_flags(self.register_x);
+        self.update_zero_flag(self.register_x);
+        self.update_negative_flag(self.register_x);
     }
 
     fn update_overflowed(&mut self, flag: bool) {
@@ -181,17 +187,19 @@ impl CPU {
         }
     }
 
-    fn update_zero_and_negative_flags(&mut self, result: u8) {
+    fn update_zero_flag(&mut self, result: u8) {
         if result == 0 {
-            self.status = self.status | 0b0000_0010;
+            byte_utils::set_zero(&mut self.status);
         } else {
-            self.status = self.status & 0b1111_1101;
+            byte_utils::unset_zero(&mut self.status);
         }
+    }
 
-        if result & 0b1000_0000 != 0 {
-            self.status = self.status | 0b1000_0000;
+    fn update_negative_flag(&mut self, result: u8) {
+        if byte_utils::is_negative(result) {
+            byte_utils::set_negative(&mut self.status);
         } else {
-            self.status = self.status & 0b0111_1111;
+            byte_utils::unset_negative(&mut self.status);
         }
     }
 
