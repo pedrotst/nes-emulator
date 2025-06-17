@@ -95,6 +95,12 @@ lazy_static! {
         OpCode::new(0x2E, "ROL", 3, 6, AddressingMode::Absolute),
         OpCode::new(0x3E, "ROL", 3, 7, AddressingMode::Absolute_X),
 
+        OpCode::new(0x6A, "ROR_A", 1, 2, AddressingMode::NoneAddressing),
+        OpCode::new(0x66, "ROR", 2, 5, AddressingMode::ZeroPage),
+        OpCode::new(0x76, "ROR", 2, 6, AddressingMode::ZeroPage_X),
+        OpCode::new(0xE6, "ROR", 3, 6, AddressingMode::Absolute),
+        OpCode::new(0x7E, "ROR", 3, 7, AddressingMode::Absolute_X),
+
 
     ];
 

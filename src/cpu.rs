@@ -273,6 +273,30 @@ impl CPU {
         self.mem_write(addr, data);
     }
 
+    fn ror_accumulator(&mut self){
+        dbg!("Running ROR_A");
+        let carry = byte_utils::get_carry(self.status);
+        self.update_carry_lsb(self.register_a);
+
+        self.register_a = (self.register_a >> 1) | (carry << 7);
+        self.update_zero_flag(self.register_a);
+        self.update_negative_flag(self.register_a);
+    }
+
+    fn ror(&mut self, mode: &AddressingMode){
+        dbg!("Running ROR");
+        let addr = self.get_operand_address(mode);
+        let mut data = self.mem_read(addr);
+
+        let carry = byte_utils::get_carry(self.status);
+        self.update_carry_lsb(data);
+
+        data = (data >> 1) | (carry << 7);
+        self.update_zero_flag(data);
+        self.update_negative_flag(data);
+        self.mem_write(addr, data);
+    }
+
     fn update_carry_lsb(&mut self, data: u8){
         if data & 0b0000_0001 != 0 {
             byte_utils::set_carry(&mut self.status);
@@ -456,6 +480,15 @@ impl CPU {
 
                 "ROL" => {
                     self.rol(&opcode.mode);
+                }
+
+
+                "ROR_A" => {
+                    self.ror_accumulator();
+                }
+
+                "ROR" => {
+                    self.ror(&opcode.mode);
                 }
 
                 /* Break */

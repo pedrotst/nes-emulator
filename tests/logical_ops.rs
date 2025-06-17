@@ -144,3 +144,49 @@ fn rol_zero_page_rotate_2(){
     assert_eq!(data, 0b0000_0011);
     assert_eq!(cpu.status & 0b0000_0011, 0b0000_0000);
 }
+
+#[test]
+fn ror_accumulator(){
+    let mut cpu = CPU::new();
+    cpu.register_a = 0b0000_0001;
+    cpu.status = 0;
+
+    cpu.load_and_run_no_reset(vec![0x6a, 0x00]);
+    assert_eq!(cpu.register_a, 0);
+    assert_eq!(cpu.status & 0b0000_0011, 0b0000_0011);
+}
+
+#[test]
+fn ror_accumulator_rotate(){
+    let mut cpu = CPU::new();
+    cpu.register_a = 0b0000_0001;
+    cpu.status = 0;
+
+    cpu.load_and_run_no_reset(vec![0x6a, 0x6a, 0x00]);
+    assert_eq!(cpu.register_a, 0b1000_0000);
+    assert_eq!(cpu.status & 0b0000_0011, 0b0000_0000);
+}
+
+#[test]
+fn ror_zero_page(){
+    let mut cpu = CPU::new();
+    cpu.mem_write(0x12, 0b0000_0001);
+    // cpu.register_a = 0b1000_0000;
+
+    cpu.load_and_run_no_reset(vec![0x66, 0x12, 0x00]);
+    let data = cpu.mem_read(0x12);
+    assert_eq!(data, 0);
+    assert_eq!(cpu.status & 0b0000_0011, 0b0000_0011);
+}
+
+#[test]
+fn ror_zero_page_rotate(){
+    let mut cpu = CPU::new();
+    cpu.mem_write(0x12, 0b0000_0001);
+    // cpu.register_a = 0b1000_0000;
+
+    cpu.load_and_run_no_reset(vec![0x66, 0x12, 0x66, 0x12, 0x00]);
+    let data = cpu.mem_read(0x12);
+    assert_eq!(data, 0b1000_0000);
+    assert_eq!(cpu.status & 0b0000_0011, 0b0000_0000);
+}
