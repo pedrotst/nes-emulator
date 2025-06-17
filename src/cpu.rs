@@ -317,6 +317,16 @@ impl CPU {
         self.update_negative_flag(self.register_a);
     }
 
+    fn eor(&mut self, mode: &AddressingMode){
+        dbg!("Running EOR");
+        let addr = self.get_operand_address(mode);
+        let data = self.mem_read(addr);
+        self.register_a ^= data;
+
+        self.update_zero_flag(self.register_a);
+        self.update_negative_flag(self.register_a);
+    }
+
     fn update_carry_lsb(&mut self, data: u8){
         if data & 0b0000_0001 != 0 {
             byte_utils::set_carry(&mut self.status);
@@ -518,6 +528,10 @@ impl CPU {
 
                 "ORA" => {
                     self.or(&opcode.mode);
+                }
+
+                "EOR" => {
+                    self.eor(&opcode.mode);
                 }
 
                 /* Break */
