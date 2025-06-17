@@ -1,5 +1,9 @@
 /* ============ Set Flags ============== */
 
+pub fn get_carry(flags: u8) -> u8 {
+    flags & 0b0000_0001
+}
+
 pub fn set_carry(flags: &mut u8) {
     *flags |= 0b0000_0001;
 }
