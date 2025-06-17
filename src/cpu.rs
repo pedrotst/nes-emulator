@@ -209,7 +209,7 @@ impl CPU {
 
     fn asl_accumulator(&mut self){
         dbg!("Running ASL_A");
-        self.update_carry(self.register_a);
+        self.update_carry_msb(self.register_a);
 
         self.register_a = self.register_a << 1;
         self.update_zero_flag(self.register_a);
@@ -220,7 +220,7 @@ impl CPU {
         dbg!("Running ASL");
         let addr = self.get_operand_address(mode);
         let mut data = self.mem_read(addr);
-        self.update_carry(data);
+        self.update_carry_msb(data);
 
         data = data << 1;
         self.update_zero_flag(data);
@@ -228,7 +228,37 @@ impl CPU {
         self.mem_write(addr, data);
     }
 
-    fn update_carry(&mut self, data: u8){
+    fn lsr_accumulator(&mut self){
+        dbg!("Running LSR_A");
+        self.update_carry_lsb(self.register_a);
+
+        self.register_a = self.register_a >> 1;
+        self.update_zero_flag(self.register_a);
+        self.update_negative_flag(self.register_a);
+    }
+
+    fn lsr(&mut self, mode: &AddressingMode){
+        dbg!("Running LSR");
+        let addr = self.get_operand_address(mode);
+        let mut data = self.mem_read(addr);
+        self.update_carry_lsb(data);
+
+        data = data >> 1;
+        self.update_zero_flag(data);
+        self.update_negative_flag(data);
+        self.mem_write(addr, data);
+    }
+
+    fn update_carry_lsb(&mut self, data: u8){
+        if data & 0b0000_0001 != 0 {
+            byte_utils::set_carry(&mut self.status);
+        }
+        else {
+            byte_utils::unset_carry(&mut self.status);
+        }
+    }
+
+    fn update_carry_msb(&mut self, data: u8){
         if data & 0b1000_0000 != 0 {
             byte_utils::set_carry(&mut self.status);
         }
@@ -386,6 +416,14 @@ impl CPU {
 
                 "ASL" => {
                     self.asl(&opcode.mode);
+                }
+
+                "LSR_A" => {
+                    self.lsr_accumulator();
+                }
+
+                "LSR" => {
+                    self.lsr(&opcode.mode);
                 }
 
                 /* Break */

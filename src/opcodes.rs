@@ -78,10 +78,16 @@ lazy_static! {
 
         /* Logical Operations */
         OpCode::new(0x0A, "ASL_A", 1, 2, AddressingMode::NoneAddressing),
-        OpCode::new(0x46, "ASL", 2, 5, AddressingMode::ZeroPage),
-        OpCode::new(0x56, "ASL", 2, 6, AddressingMode::ZeroPage_X),
-        OpCode::new(0x4E, "ASL", 3, 6, AddressingMode::Absolute),
-        OpCode::new(0x5E, "ASL", 3, 7, AddressingMode::Absolute_X),
+        OpCode::new(0x06, "ASL", 2, 5, AddressingMode::ZeroPage),
+        OpCode::new(0x16, "ASL", 2, 6, AddressingMode::ZeroPage_X),
+        OpCode::new(0x0E, "ASL", 3, 6, AddressingMode::Absolute),
+        OpCode::new(0x1E, "ASL", 3, 7, AddressingMode::Absolute_X),
+
+        OpCode::new(0x4A, "LSR_A", 1, 2, AddressingMode::NoneAddressing),
+        OpCode::new(0x46, "LSR", 2, 5, AddressingMode::ZeroPage),
+        OpCode::new(0x56, "LSR", 2, 6, AddressingMode::ZeroPage_X),
+        OpCode::new(0x4E, "LSR", 3, 6, AddressingMode::Absolute),
+        OpCode::new(0x5E, "LSR", 3, 7, AddressingMode::Absolute_X),
 
 
     ];
