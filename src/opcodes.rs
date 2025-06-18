@@ -133,6 +133,16 @@ lazy_static! {
         OpCode::new(0x24, "BIT", 2, 3,          AddressingMode::ZeroPage),
         OpCode::new(0x2C, "BIT", 3, 4,          AddressingMode::Absolute),
 
+        /* Flags Management */
+        OpCode::new(0x18, "CLC", 1, 2,          AddressingMode::NoneAddressing),
+        OpCode::new(0xD8, "CLD", 1, 2,          AddressingMode::NoneAddressing),
+        OpCode::new(0x58, "CLI", 1, 2,          AddressingMode::NoneAddressing),
+        OpCode::new(0xB8, "CLV", 1, 2,          AddressingMode::NoneAddressing),
+
+        OpCode::new(0x38, "SEC", 1, 2,          AddressingMode::NoneAddressing),
+        OpCode::new(0xF8, "SED", 1, 2,          AddressingMode::NoneAddressing),
+        OpCode::new(0x78, "SEI", 1, 2,          AddressingMode::NoneAddressing),
+
     ];
 
     pub static ref OPCODES_MAP: HashMap<u8, &'static OpCode> = {

@@ -1,6 +1,6 @@
-use std::collections::HashMap;
-use crate::opcodes;
 use crate::byte_utils;
+use crate::opcodes;
+use std::collections::HashMap;
 
 #[derive(Debug)]
 #[allow(non_camel_case_types)]
@@ -23,12 +23,10 @@ pub struct CPU {
     pub register_y: u8,
     pub status: u8,
     pub program_counter: u16,
-    memory: [u8; 0xFFFF]
+    memory: [u8; 0xFFFF],
 }
 
 impl CPU {
-
-
     pub fn new() -> Self {
         CPU {
             register_a: 0,
@@ -36,7 +34,7 @@ impl CPU {
             register_y: 0,
             status: 0,
             program_counter: 0,
-            memory : [0; 0xFFFF],
+            memory: [0; 0xFFFF],
         }
     }
 
@@ -50,7 +48,7 @@ impl CPU {
 
     pub fn mem_read_u16(&mut self, pos: u16) -> u16 {
         let lo = self.mem_read(pos) as u16;
-        let hi = self.mem_read(pos+1) as u16;
+        let hi = self.mem_read(pos + 1) as u16;
         (hi << 8) | (lo as u16)
     }
 
@@ -71,11 +69,11 @@ impl CPU {
     }
 
     pub fn load(&mut self, program: Vec<u8>) {
-        self.memory[0x8000 .. (0x8000 + program.len())].copy_from_slice(&program[..]);
+        self.memory[0x8000..(0x8000 + program.len())].copy_from_slice(&program[..]);
         self.mem_write_u16(0xFFFC, 0x8000);
     }
 
-    pub fn load_and_run(&mut self, program: Vec<u8>){
+    pub fn load_and_run(&mut self, program: Vec<u8>) {
         // dbg!(&program);
         self.load(program);
         // dbg!(self.memory[0x8000]);
@@ -86,12 +84,11 @@ impl CPU {
         self.run();
     }
 
-    pub fn load_and_run_no_reset(&mut self, program: Vec<u8>){
+    pub fn load_and_run_no_reset(&mut self, program: Vec<u8>) {
         self.load(program);
         self.program_counter = self.mem_read_u16(0xFFFC);
         self.run();
     }
-
 
     fn lda(&mut self, mode: &AddressingMode) {
         dbg!("Running lda");
@@ -129,7 +126,7 @@ impl CPU {
         self.update_negative_flag(self.register_y);
     }
 
-    fn sta(&mut self, mode: &AddressingMode){
+    fn sta(&mut self, mode: &AddressingMode) {
         dbg!("Running STA");
         let addr = self.get_operand_address(mode);
         dbg!(addr);
@@ -137,7 +134,7 @@ impl CPU {
         self.mem_write(addr, self.register_a);
     }
 
-    fn stx(&mut self, mode: &AddressingMode){
+    fn stx(&mut self, mode: &AddressingMode) {
         dbg!("Running STX");
         let addr = self.get_operand_address(mode);
         dbg!(addr);
@@ -145,7 +142,7 @@ impl CPU {
         self.mem_write(addr, self.register_x);
     }
 
-    fn sty(&mut self, mode: &AddressingMode){
+    fn sty(&mut self, mode: &AddressingMode) {
         dbg!("Running STY");
         let addr = self.get_operand_address(mode);
         dbg!(addr);
@@ -177,7 +174,7 @@ impl CPU {
         self.update_negative_flag(self.register_a);
     }
 
-    fn inx(&mut self){
+    fn inx(&mut self) {
         dbg!("Running INX");
         self.register_x = self.register_x.wrapping_add(1);
 
@@ -185,14 +182,14 @@ impl CPU {
         self.update_negative_flag(self.register_x);
     }
 
-    fn dex(&mut self){
+    fn dex(&mut self) {
         dbg!("Running DEX");
         self.register_x = self.register_x.wrapping_sub(1);
         self.update_zero_flag(self.register_x);
         self.update_negative_flag(self.register_x);
     }
 
-    fn iny(&mut self){
+    fn iny(&mut self) {
         dbg!("Running INY");
         self.register_y = self.register_y.wrapping_add(1);
 
@@ -200,14 +197,14 @@ impl CPU {
         self.update_negative_flag(self.register_y);
     }
 
-    fn dey(&mut self){
+    fn dey(&mut self) {
         dbg!("Running DEY");
         self.register_y = self.register_x.wrapping_sub(1);
         self.update_zero_flag(self.register_y);
         self.update_negative_flag(self.register_y);
     }
 
-    fn asl_accumulator(&mut self){
+    fn asl_accumulator(&mut self) {
         dbg!("Running ASL_A");
         self.update_carry_msb(self.register_a);
 
@@ -216,7 +213,7 @@ impl CPU {
         self.update_negative_flag(self.register_a);
     }
 
-    fn asl(&mut self, mode: &AddressingMode){
+    fn asl(&mut self, mode: &AddressingMode) {
         dbg!("Running ASL");
         let addr = self.get_operand_address(mode);
         let mut data = self.mem_read(addr);
@@ -228,7 +225,7 @@ impl CPU {
         self.mem_write(addr, data);
     }
 
-    fn lsr_accumulator(&mut self){
+    fn lsr_accumulator(&mut self) {
         dbg!("Running LSR_A");
         self.update_carry_lsb(self.register_a);
 
@@ -237,7 +234,7 @@ impl CPU {
         self.update_negative_flag(self.register_a);
     }
 
-    fn lsr(&mut self, mode: &AddressingMode){
+    fn lsr(&mut self, mode: &AddressingMode) {
         dbg!("Running LSR");
         let addr = self.get_operand_address(mode);
         let mut data = self.mem_read(addr);
@@ -249,7 +246,7 @@ impl CPU {
         self.mem_write(addr, data);
     }
 
-    fn rol_accumulator(&mut self){
+    fn rol_accumulator(&mut self) {
         dbg!("Running ROL_A");
         let carry = byte_utils::get_carry(self.status);
         self.update_carry_msb(self.register_a);
@@ -259,7 +256,7 @@ impl CPU {
         self.update_negative_flag(self.register_a);
     }
 
-    fn rol(&mut self, mode: &AddressingMode){
+    fn rol(&mut self, mode: &AddressingMode) {
         dbg!("Running ROL");
         let addr = self.get_operand_address(mode);
         let mut data = self.mem_read(addr);
@@ -273,7 +270,7 @@ impl CPU {
         self.mem_write(addr, data);
     }
 
-    fn ror_accumulator(&mut self){
+    fn ror_accumulator(&mut self) {
         dbg!("Running ROR_A");
         let carry = byte_utils::get_carry(self.status);
         self.update_carry_lsb(self.register_a);
@@ -283,7 +280,7 @@ impl CPU {
         self.update_negative_flag(self.register_a);
     }
 
-    fn ror(&mut self, mode: &AddressingMode){
+    fn ror(&mut self, mode: &AddressingMode) {
         dbg!("Running ROR");
         let addr = self.get_operand_address(mode);
         let mut data = self.mem_read(addr);
@@ -297,7 +294,7 @@ impl CPU {
         self.mem_write(addr, data);
     }
 
-    fn and(&mut self, mode: &AddressingMode){
+    fn and(&mut self, mode: &AddressingMode) {
         dbg!("Running AND");
         let addr = self.get_operand_address(mode);
         let data = self.mem_read(addr);
@@ -307,7 +304,7 @@ impl CPU {
         self.update_negative_flag(self.register_a);
     }
 
-    fn or(&mut self, mode: &AddressingMode){
+    fn or(&mut self, mode: &AddressingMode) {
         dbg!("Running OR");
         let addr = self.get_operand_address(mode);
         let data = self.mem_read(addr);
@@ -317,7 +314,7 @@ impl CPU {
         self.update_negative_flag(self.register_a);
     }
 
-    fn eor(&mut self, mode: &AddressingMode){
+    fn eor(&mut self, mode: &AddressingMode) {
         dbg!("Running EOR");
         let addr = self.get_operand_address(mode);
         let data = self.mem_read(addr);
@@ -327,7 +324,7 @@ impl CPU {
         self.update_negative_flag(self.register_a);
     }
 
-    fn bit(&mut self, mode: &AddressingMode){
+    fn bit(&mut self, mode: &AddressingMode) {
         dbg!("Running BIT");
         let addr = self.get_operand_address(mode);
         let data = self.mem_read(addr);
@@ -336,28 +333,23 @@ impl CPU {
 
         self.status |= data & 0b1100_0000;
         dbg!(self.status);
-
-    
     }
 
-    fn update_carry_lsb(&mut self, data: u8){
+    fn update_carry_lsb(&mut self, data: u8) {
         if data & 0b0000_0001 != 0 {
             byte_utils::set_carry(&mut self.status);
-        }
-        else {
+        } else {
             byte_utils::unset_carry(&mut self.status);
         }
     }
 
-    fn update_carry_msb(&mut self, data: u8){
+    fn update_carry_msb(&mut self, data: u8) {
         if data & 0b1000_0000 != 0 {
             byte_utils::set_carry(&mut self.status);
-        }
-        else {
+        } else {
             byte_utils::unset_carry(&mut self.status);
         }
     }
-
 
     fn update_zero_flag(&mut self, result: u8) {
         if result == 0 {
@@ -387,25 +379,25 @@ impl CPU {
                 let pos = self.mem_read(self.program_counter);
                 let addr = pos.wrapping_add(self.register_x) as u16;
                 addr
-            },
+            }
 
             AddressingMode::ZeroPage_Y => {
                 let pos = self.mem_read(self.program_counter);
                 let addr = pos.wrapping_add(self.register_y) as u16;
                 addr
-            },
+            }
 
             AddressingMode::Absolute_X => {
                 let base = self.mem_read_u16(self.program_counter);
                 let addr = base.wrapping_add(self.register_x as u16);
                 addr
-            },
+            }
 
             AddressingMode::Absolute_Y => {
                 let base = self.mem_read_u16(self.program_counter);
                 let addr = base.wrapping_add(self.register_y as u16);
                 addr
-            },
+            }
 
             AddressingMode::Indirect_X => {
                 let base = self.mem_read(self.program_counter);
@@ -424,7 +416,7 @@ impl CPU {
                 let deref_base = (hi as u16) << 8 | (lo as u16);
                 let deref = deref_base.wrapping_add(self.register_y as u16);
                 deref
-            } 
+            }
 
             AddressingMode::NoneAddressing => {
                 panic!("mode {:?} is not supported", mode)
@@ -435,7 +427,6 @@ impl CPU {
     pub fn run(&mut self) {
         let ref opcodes: HashMap<u8, &'static opcodes::OpCode> = *opcodes::OPCODES_MAP;
 
-
         loop {
             println!("Entered loop");
             let code = self.mem_read(self.program_counter);
@@ -443,7 +434,9 @@ impl CPU {
             self.program_counter += 1;
             // let program_counter_state = self.program_counter;
 
-            let opcode = opcodes.get(&code).expect(&format!("OpCode {:x} is not recognized", code));
+            let opcode = opcodes
+                .get(&code)
+                .expect(&format!("OpCode {:x} is not recognized", code));
             dbg!(opcode);
 
             match opcode.mneumonic {
@@ -525,7 +518,6 @@ impl CPU {
                     self.rol(&opcode.mode);
                 }
 
-
                 "ROR_A" => {
                     self.ror_accumulator();
                 }
@@ -551,8 +543,31 @@ impl CPU {
                     self.bit(&opcode.mode);
                 }
 
-                /* Break */
+                /* Flag Management */
+                "SEC" => {
+                    byte_utils::set_carry(&mut self.status);
+                }
+                "SED" => {
+                    byte_utils::set_decimal(&mut self.status);
+                }
+                "SEI" => {
+                    byte_utils::set_interrupt_disable(&mut self.status);
+                }
 
+                "CLC" => {
+                    byte_utils::unset_carry(&mut self.status);
+                }
+                "CLD" => {
+                    byte_utils::unset_decimal(&mut self.status);
+                }
+                "CLI" => {
+                    byte_utils::unset_interrupt_disable(&mut self.status);
+                }
+                "CLV" => {
+                    byte_utils::unset_overflow(&mut self.status);
+                }
+
+                /* Break */
                 "BRK" => {
                     return;
                 }
@@ -565,11 +580,9 @@ impl CPU {
                 self.program_counter += (opcode.len - 1) as u16;
             } */
             self.program_counter += (opcode.len - 1) as u16;
-
         }
     }
 }
 
 #[cfg(test)]
-mod test {
-}
+mod test {}
