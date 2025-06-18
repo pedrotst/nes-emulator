@@ -335,6 +335,52 @@ impl CPU {
         dbg!(self.status);
     }
 
+    fn adc(&mut self, mode: &AddressingMode){
+        dbg!("Running ADC");
+        let addr = self.get_operand_address(mode);
+        let data = self.mem_read(addr);
+        dbg!(data);
+
+        let carry = byte_utils::get_carry(self.status);
+        dbg!(carry);
+
+        let (result1, carry1) = self.register_a.overflowing_add(data);
+        let (result, carry) = result1.overflowing_add(carry);
+        let overflow = (self.register_a ^ result) & (data ^ result) & 0x80 != 0;
+        self.register_a = result;
+        dbg!(result);
+
+        self.update_zero_flag(result);
+        println!("update zero flag");
+        dbg!(self.status);
+        self.update_negative_flag(result);
+        println!("update negative flag");
+        dbg!(self.status);
+        self.update_overflow(overflow);
+        println!("update overflow flag");
+        dbg!(self.status);
+        self.update_carry(carry1 || carry);
+        println!("update carry flag");
+        dbg!(self.status);
+    }
+
+    fn update_carry(&mut self, cond: bool){
+        if cond {
+            byte_utils::set_carry(&mut self.status);
+        }
+        else {
+            byte_utils::unset_carry(&mut self.status);
+        }
+    }
+    fn update_overflow(&mut self, cond: bool){
+        if cond {
+            byte_utils::set_overflow(&mut self.status);
+        }
+        else {
+            byte_utils::unset_overflow(&mut self.status);
+        }
+    }
+
     fn update_carry_lsb(&mut self, data: u8) {
         if data & 0b0000_0001 != 0 {
             byte_utils::set_carry(&mut self.status);
@@ -565,6 +611,11 @@ impl CPU {
                 }
                 "CLV" => {
                     byte_utils::unset_overflow(&mut self.status);
+                }
+
+                /* Arithmetic */
+                "ADC" => {
+                    self.adc(&opcode.mode);
                 }
 
                 /* Break */
