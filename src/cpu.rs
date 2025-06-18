@@ -335,11 +335,15 @@ impl CPU {
         dbg!(self.status);
     }
 
-    fn adc(&mut self, mode: &AddressingMode){
+    fn adc_sbc(&mut self, mode: &AddressingMode, sub: bool){
         dbg!("Running ADC");
         let addr = self.get_operand_address(mode);
-        let data = self.mem_read(addr);
+        let mut data = self.mem_read(addr);
         dbg!(data);
+        if sub {
+            data = !data;
+        }
+        
 
         let carry = byte_utils::get_carry(self.status);
         dbg!(carry);
@@ -351,17 +355,9 @@ impl CPU {
         dbg!(result);
 
         self.update_zero_flag(result);
-        println!("update zero flag");
-        dbg!(self.status);
         self.update_negative_flag(result);
-        println!("update negative flag");
-        dbg!(self.status);
         self.update_overflow(overflow);
-        println!("update overflow flag");
-        dbg!(self.status);
         self.update_carry(carry1 || carry);
-        println!("update carry flag");
-        dbg!(self.status);
     }
 
     fn update_carry(&mut self, cond: bool){
@@ -615,7 +611,12 @@ impl CPU {
 
                 /* Arithmetic */
                 "ADC" => {
-                    self.adc(&opcode.mode);
+                    self.adc_sbc(&opcode.mode, false);
+                }
+
+                /* Arithmetic */
+                "SBC" => {
+                    self.adc_sbc(&opcode.mode, true);
                 }
 
                 /* Break */
