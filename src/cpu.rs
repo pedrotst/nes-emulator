@@ -624,6 +624,10 @@ impl CPU {
                 }
 
                 /* Compare X and Y */
+                "CMP" => {
+                    self.compare(&opcode.mode, self.register_a);
+                }
+
                 "CPX" => {
                     self.compare(&opcode.mode, self.register_x);
                 }
