@@ -335,7 +335,23 @@ impl CPU {
         dbg!(self.status);
     }
 
-    fn adc_sbc(&mut self, mode: &AddressingMode, sub: bool){
+    fn compare(&mut self, mode: &AddressingMode, compare_with: u8) {
+        dbg!("Running Compare");
+        let addr = self.get_operand_address(mode);
+        let data = self.mem_read(addr);
+        let result = compare_with.wrapping_sub(data);
+
+        if data <= compare_with {
+            byte_utils::set_carry(&mut self.status);
+        } else {
+            byte_utils::unset_carry(&mut self.status);
+        }
+
+        self.update_zero_flag(result);
+        self.update_negative_flag(result);
+    }
+
+    fn adc_sbc(&mut self, mode: &AddressingMode, sub: bool) {
         dbg!("Running ADC");
         let addr = self.get_operand_address(mode);
         let mut data = self.mem_read(addr);
@@ -343,7 +359,6 @@ impl CPU {
         if sub {
             data = !data;
         }
-        
 
         let carry = byte_utils::get_carry(self.status);
         dbg!(carry);
@@ -360,19 +375,42 @@ impl CPU {
         self.update_carry(carry1 || carry);
     }
 
-    fn update_carry(&mut self, cond: bool){
+    fn branch(&mut self, beq: bool) {
+        dbg!("Running Branch");
+        let offset = self.mem_read(self.program_counter);
+        println!("{:#X}", self.program_counter);
+        if byte_utils::is_zero_set(self.status) == beq {
+            println!("offset:   {:#X}", offset);
+            let x = offset as i8 as i16;
+            println!("toi16:    {:#X}", x);
+            println!(
+                "wrap_add: {:#X}",
+                self.program_counter.wrapping_add_signed(x)
+            );
+            self.program_counter = self.program_counter.wrapping_add_signed(x) + 1;
+
+            println!("final:    {:#X}", self.program_counter);
+        }
+        /* iszero |  beq  |     condi
+            0     |   0   |       1 -> 0
+            1     |   0   |       1
+            0     |   1   |       0
+            1     |   1   |       1
+
+        */
+    }
+
+    fn update_carry(&mut self, cond: bool) {
         if cond {
             byte_utils::set_carry(&mut self.status);
-        }
-        else {
+        } else {
             byte_utils::unset_carry(&mut self.status);
         }
     }
-    fn update_overflow(&mut self, cond: bool){
+    fn update_overflow(&mut self, cond: bool) {
         if cond {
             byte_utils::set_overflow(&mut self.status);
-        }
-        else {
+        } else {
             byte_utils::unset_overflow(&mut self.status);
         }
     }
@@ -474,7 +512,7 @@ impl CPU {
             let code = self.mem_read(self.program_counter);
             dbg!(code);
             self.program_counter += 1;
-            // let program_counter_state = self.program_counter;
+            let program_counter_state = self.program_counter;
 
             let opcode = opcodes
                 .get(&code)
@@ -585,6 +623,15 @@ impl CPU {
                     self.bit(&opcode.mode);
                 }
 
+                /* Compare X and Y */
+                "CPX" => {
+                    self.compare(&opcode.mode, self.register_x);
+                }
+
+                "CPY" => {
+                    self.compare(&opcode.mode, self.register_y);
+                }
+
                 /* Flag Management */
                 "SEC" => {
                     byte_utils::set_carry(&mut self.status);
@@ -613,10 +660,16 @@ impl CPU {
                 "ADC" => {
                     self.adc_sbc(&opcode.mode, false);
                 }
-
-                /* Arithmetic */
                 "SBC" => {
                     self.adc_sbc(&opcode.mode, true);
+                }
+
+                /* Branch */
+                "BNE" => {
+                    self.branch(false);
+                }
+                "BEQ" => {
+                    self.branch(true);
                 }
 
                 /* Break */
@@ -627,11 +680,9 @@ impl CPU {
                 _ => todo!(),
             }
 
-            /* The reference saves the program_counter state
             if program_counter_state == self.program_counter {
                 self.program_counter += (opcode.len - 1) as u16;
-            } */
-            self.program_counter += (opcode.len - 1) as u16;
+            }
         }
     }
 }

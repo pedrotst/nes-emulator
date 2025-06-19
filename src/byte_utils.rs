@@ -1,8 +1,19 @@
-/* ============ Set Flags ============== */
+/* ============ Check Flags ============== */
+
+pub fn is_zero_set(flags: u8) -> bool {
+    if flags & 0b0000_0010 != 0 {
+        true
+    }
+    else {
+        false
+    }
+}
 
 pub fn get_carry(flags: u8) -> u8 {
     flags & 0b0000_0001
 }
+
+/* ============ Set Flags ============== */
 
 pub fn set_carry(flags: &mut u8) {
     *flags |= 0b0000_0001;

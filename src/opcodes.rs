@@ -38,7 +38,7 @@ lazy_static! {
         OpCode::new(0x88, "DEY", 1, 2, AddressingMode::NoneAddressing),
         OpCode::new(0xC8, "INY", 1, 2, AddressingMode::NoneAddressing),
 
-
+        /* Loads */
         OpCode::new(0xA9, "LDA", 2, 2, AddressingMode::Immediate),
         OpCode::new(0xA5, "LDA", 2, 3, AddressingMode::ZeroPage),
         OpCode::new(0xB5, "LDA", 2, 4, AddressingMode::ZeroPage_X),
@@ -59,6 +59,8 @@ lazy_static! {
         OpCode::new(0xB4, "LDY", 2, 4, AddressingMode::ZeroPage_X),
         OpCode::new(0xAC, "LDY", 3, 4, AddressingMode::Absolute),
         OpCode::new(0xBC, "LDY", 3, 4 /* +1 */, AddressingMode::Absolute_X),
+
+        /* Stores */
         
         OpCode::new(0x85, "STA", 2, 3, AddressingMode::ZeroPage),
         OpCode::new(0x95, "STA", 2, 4, AddressingMode::ZeroPage_X),
@@ -133,6 +135,15 @@ lazy_static! {
         OpCode::new(0x24, "BIT", 2, 3,          AddressingMode::ZeroPage),
         OpCode::new(0x2C, "BIT", 3, 4,          AddressingMode::Absolute),
 
+        /* Compare X and Y */
+        OpCode::new(0xE0, "CPX", 2, 2,          AddressingMode::Immediate),
+        OpCode::new(0xE4, "CPX", 3, 3,          AddressingMode::ZeroPage),
+        OpCode::new(0xEC, "CPX", 3, 4,          AddressingMode::Absolute),
+
+        OpCode::new(0xC0, "CPY", 2, 2,          AddressingMode::Immediate),
+        OpCode::new(0xC4, "CPY", 3, 3,          AddressingMode::ZeroPage),
+        OpCode::new(0xCC, "CPY", 3, 4,          AddressingMode::Absolute),
+
         /* Flags Management */
         OpCode::new(0x18, "CLC", 1, 2,          AddressingMode::NoneAddressing),
         OpCode::new(0xD8, "CLD", 1, 2,          AddressingMode::NoneAddressing),
@@ -161,6 +172,10 @@ lazy_static! {
         OpCode::new(0xF9, "SBC", 3, 4 /* +1 */, AddressingMode::Absolute_Y),
         OpCode::new(0xE1, "SBC", 2, 6,          AddressingMode::Indirect_X),
         OpCode::new(0xF1, "SBC", 2, 5 /* +1 */, AddressingMode::Indirect_Y),
+
+        /* Branch */
+        OpCode::new(0xD0, "BNE", 2, 2 /* 3 branch, 4 page crossed */, AddressingMode::NoneAddressing),
+        OpCode::new(0xF0, "BEQ", 2, 2 /* 3 branch, 4 page crossed */, AddressingMode::NoneAddressing),
 
     ];
 
