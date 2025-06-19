@@ -352,7 +352,7 @@ impl CPU {
     }
 
     fn adc_sbc(&mut self, mode: &AddressingMode, sub: bool) {
-        dbg!("Running ADC");
+        dbg!("Running ADC/SBC");
         let addr = self.get_operand_address(mode);
         let mut data = self.mem_read(addr);
         dbg!(data);
