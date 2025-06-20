@@ -12,6 +12,7 @@ pub enum AddressingMode {
     Absolute,
     Absolute_X,
     Absolute_Y,
+    Indirect,
     Indirect_X,
     Indirect_Y,
     NoneAddressing,
@@ -423,6 +424,14 @@ impl CPU {
         }
     }
 
+    fn jmp(&mut self, mode: &AddressingMode) {
+        dbg!("Running JMP");
+        let addr = self.get_operand_address(mode);
+        println!("addr:    {:#X}", addr);
+
+        self.program_counter = addr;
+    }
+
     fn update_carry(&mut self, cond: bool) {
         if cond {
             byte_utils::set_carry(&mut self.status);
@@ -500,6 +509,11 @@ impl CPU {
                 let base = self.mem_read_u16(self.program_counter);
                 let addr = base.wrapping_add(self.register_y as u16);
                 addr
+            }
+
+            AddressingMode::Indirect => {
+                let addr = self.mem_read_u16(self.program_counter);
+                self.mem_read_u16(addr)
             }
 
             AddressingMode::Indirect_X => {
@@ -706,14 +720,12 @@ impl CPU {
                     self.branch_carry(true);
                 }
 
-
                 "BMI" => {
                     self.branch_negative(true);
                 }
                 "BPL" => {
                     self.branch_negative(false);
                 }
-
 
                 "BVC" => {
                     self.branch_overflow(false);
@@ -722,6 +734,12 @@ impl CPU {
                     self.branch_overflow(true);
                 }
 
+                "JMP" => {
+                    self.jmp(&opcode.mode);
+                }
+
+                "NOP" => {
+                }
 
                 /* Break */
                 "BRK" => {

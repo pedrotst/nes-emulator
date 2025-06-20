@@ -27,6 +27,8 @@ impl OpCode {
 lazy_static! {
     pub static ref CPU_OPS_CODES: Vec<OpCode> = vec![
         OpCode::new(0x00, "BRK", 1, 7, AddressingMode::NoneAddressing),
+        OpCode::new(0xea, "NOP", 1, 2, AddressingMode::NoneAddressing),
+
 
         // Register Instructions
         OpCode::new(0xAA, "TAX", 1, 2, AddressingMode::NoneAddressing),
@@ -194,6 +196,9 @@ lazy_static! {
 
         OpCode::new(0x50, "BVC", 2, 2 /* 3 branch, 4 page crossed */, AddressingMode::NoneAddressing),
         OpCode::new(0x70, "BVS", 2, 2 /* 3 branch, 4 page crossed */, AddressingMode::NoneAddressing),
+
+        OpCode::new(0x4C, "JMP", 3, 3                               , AddressingMode::Absolute),
+        OpCode::new(0x6C, "JMP", 3, 5                               , AddressingMode::Indirect),
 
     ];
 
