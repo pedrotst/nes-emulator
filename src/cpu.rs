@@ -77,20 +77,42 @@ impl CPU {
         self.mem_write_u16(0xFFFC, 0x8000);
     }
 
-    pub fn push_stack(&mut self, data: u16){
+    pub fn push_stack_u16(&mut self, data: u16){
         let hi = 0x01;
         let addr = (hi << 8) | self.stack_pointer as u16;
-        println!("pushing addr: {:X}", addr);
+        println!("pushing addr: {:#X}", addr);
+        println!("pushing data: {:#X}", data);
         self.mem_write_u16(addr, data);
-        self.stack_pointer -= 1;
+        self.stack_pointer -= 2;
     }
     
-    pub fn pop_stack(&mut self) -> u16 {
+    pub fn pop_stack(&mut self) -> u8 {
         self.stack_pointer += 1;
         let hi = 0x01;
         let addr = (hi << 8) | self.stack_pointer as u16;
-        println!("popping addr: {:X}", addr);
-        self.mem_read_u16(addr)
+        let data = self.mem_read(addr);
+        println!("popping addr: {:#X}", addr);
+        println!("popping data: {:#X}", data);
+        data
+    }
+
+    pub fn push_stack(&mut self, data: u8){
+        let hi = 0x01;
+        let addr = (hi << 8) | self.stack_pointer as u16;
+        println!("pushing addr: {:#X}", addr);
+        println!("pushing data: {:#X}", data);
+        self.mem_write(addr, data);
+        self.stack_pointer -= 1;
+    }
+    
+    pub fn pop_stack_u16(&mut self) -> u16 {
+        self.stack_pointer += 2;
+        let hi = 0x01;
+        let addr = (hi << 8) | self.stack_pointer as u16;
+        let data = self.mem_read_u16(addr);
+        println!("popping addr: {:#X}", addr);
+        println!("popping data: {:#X}", data);
+        data
     }
 
     pub fn load_and_run(&mut self, program: Vec<u8>) {
@@ -114,8 +136,8 @@ impl CPU {
         dbg!("Running lda");
         let addr = self.get_operand_address(mode);
         let value = self.mem_read(addr);
-        dbg!(addr);
-        dbg!(value);
+        println!("addr: {:#X}", addr);
+        println!("val : {:#X}", value);
 
         self.register_a = value;
         self.update_zero_flag(self.register_a);
@@ -455,14 +477,28 @@ impl CPU {
     fn jsr(&mut self, mode: &AddressingMode) {
         dbg!("Running JSR");
         let new_pc = self.get_operand_address(mode);
-        self.push_stack(self.program_counter + 1);
+        self.push_stack_u16(self.program_counter + 1);
         self.program_counter = new_pc;
     }
 
     fn rts(&mut self) {
         dbg!("Running RTS");
-        let new_pc = self.pop_stack();
+        let new_pc = self.pop_stack_u16();
         self.program_counter = new_pc + 1;
+    }
+
+    fn pha(&mut self) {
+        dbg!("Running PHA");
+        self.push_stack(self.register_a);
+
+    }
+
+    fn pla(&mut self) {
+        dbg!("Running PLA");
+        self.register_a = self.pop_stack();
+
+        self.update_zero_flag(self.register_a);
+        self.update_negative_flag(self.register_a);
     }
 
     fn update_carry(&mut self, cond: bool) {
@@ -778,6 +814,14 @@ impl CPU {
 
                 "RTS" => {
                     self.rts();
+                }
+
+                /* Stack Operations */
+                "PHA" => {
+                    self.pha();
+                }
+                "PLA" => {
+                    self.pla();
                 }
 
                 "NOP" => {
