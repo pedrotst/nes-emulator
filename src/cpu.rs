@@ -443,12 +443,26 @@ impl CPU {
         }
     }
 
+    /* TODO: Implement Page Bug! */
     fn jmp(&mut self, mode: &AddressingMode) {
         dbg!("Running JMP");
         let addr = self.get_operand_address(mode);
         println!("addr:    {:#X}", addr);
 
         self.program_counter = addr;
+    }
+
+    fn jsr(&mut self, mode: &AddressingMode) {
+        dbg!("Running JSR");
+        let new_pc = self.get_operand_address(mode);
+        self.push_stack(self.program_counter + 1);
+        self.program_counter = new_pc;
+    }
+
+    fn rts(&mut self) {
+        dbg!("Running RTS");
+        let new_pc = self.pop_stack();
+        self.program_counter = new_pc + 1;
     }
 
     fn update_carry(&mut self, cond: bool) {
@@ -566,8 +580,9 @@ impl CPU {
         loop {
             println!("Entered loop");
             let code = self.mem_read(self.program_counter);
-            dbg!(code);
+            println!("code: {:#X}", code);
             self.program_counter += 1;
+            println!("PC:   {:#X}", self.program_counter);
             let program_counter_state = self.program_counter;
 
             let opcode = opcodes
@@ -755,6 +770,14 @@ impl CPU {
 
                 "JMP" => {
                     self.jmp(&opcode.mode);
+                }
+
+                "JSR" => {
+                    self.jsr(&opcode.mode);
+                }
+
+                "RTS" => {
+                    self.rts();
                 }
 
                 "NOP" => {
