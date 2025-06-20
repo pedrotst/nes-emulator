@@ -411,6 +411,18 @@ impl CPU {
         }
     }
 
+    fn branch_overflow(&mut self, beq: bool) {
+        dbg!("Running BVC/BVS");
+        let offset = self.mem_read(self.program_counter);
+        println!("initial:    {:#X}", self.program_counter);
+
+        if byte_utils::is_overflow_set(self.status) == beq {
+            let x = offset as i8 as i16;
+            self.program_counter = self.program_counter.wrapping_add_signed(x) + 1;
+            println!("final:    {:#X}", self.program_counter);
+        }
+    }
+
     fn update_carry(&mut self, cond: bool) {
         if cond {
             byte_utils::set_carry(&mut self.status);
@@ -700,6 +712,14 @@ impl CPU {
                 }
                 "BPL" => {
                     self.branch_negative(false);
+                }
+
+
+                "BVC" => {
+                    self.branch_overflow(false);
+                }
+                "BVS" => {
+                    self.branch_overflow(true);
                 }
 
 
