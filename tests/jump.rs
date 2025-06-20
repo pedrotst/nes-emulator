@@ -1,5 +1,6 @@
 use nes_emulator::cpu::CPU;
 
+//TODO: Implement a better jmp test
 #[test]
 fn jmp_nop() {
     let mut cpu = CPU::new();

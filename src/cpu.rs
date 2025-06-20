@@ -23,6 +23,7 @@ pub struct CPU {
     pub register_x: u8,
     pub register_y: u8,
     pub status: u8,
+    pub stack_pointer: u8,
     pub program_counter: u16,
     memory: [u8; 0xFFFF],
 }
@@ -34,6 +35,7 @@ impl CPU {
             register_x: 0,
             register_y: 0,
             status: 0,
+            stack_pointer: 0xff,
             program_counter: 0,
             memory: [0; 0xFFFF],
         }
@@ -65,6 +67,7 @@ impl CPU {
         self.register_x = 0;
         self.register_y = 0;
         self.status = 0;
+        self.stack_pointer = 0xff;
 
         self.program_counter = self.mem_read_u16(0xFFFC);
     }
@@ -72,6 +75,22 @@ impl CPU {
     pub fn load(&mut self, program: Vec<u8>) {
         self.memory[0x8000..(0x8000 + program.len())].copy_from_slice(&program[..]);
         self.mem_write_u16(0xFFFC, 0x8000);
+    }
+
+    pub fn push_stack(&mut self, data: u16){
+        let hi = 0x01;
+        let addr = (hi << 8) | self.stack_pointer as u16;
+        println!("pushing addr: {:X}", addr);
+        self.mem_write_u16(addr, data);
+        self.stack_pointer -= 1;
+    }
+    
+    pub fn pop_stack(&mut self) -> u16 {
+        self.stack_pointer += 1;
+        let hi = 0x01;
+        let addr = (hi << 8) | self.stack_pointer as u16;
+        println!("popping addr: {:X}", addr);
+        self.mem_read_u16(addr)
     }
 
     pub fn load_and_run(&mut self, program: Vec<u8>) {
