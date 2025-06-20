@@ -9,3 +9,15 @@ fn jmp_nop() {
     assert_eq!(cpu.program_counter, 0x080f);
 }
 
+#[test]
+fn jmp_brk() {
+    let mut cpu = CPU::new();
+
+    cpu.load(vec![0xa9, 0x03, 0x4c, 0x08, 0x80, 0x00, 0x00, 0x00, 0xa9, 0xf2, 0xea, 0xea, 0xea]);
+    cpu.reset();
+    println!("{:#X}", cpu.program_counter);
+    cpu.run();
+    println!("{:#X}", cpu.program_counter);
+    assert_eq!(cpu.register_a, 0xf2);
+}
+
