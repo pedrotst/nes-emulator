@@ -399,6 +399,18 @@ impl CPU {
         }
     }
 
+    fn branch_negative(&mut self, beq: bool) {
+        dbg!("Running BMI/BPL");
+        let offset = self.mem_read(self.program_counter);
+        println!("initial:    {:#X}", self.program_counter);
+
+        if byte_utils::is_negative_set(self.status) == beq {
+            let x = offset as i8 as i16;
+            self.program_counter = self.program_counter.wrapping_add_signed(x) + 1;
+            println!("final:    {:#X}", self.program_counter);
+        }
+    }
+
     fn update_carry(&mut self, cond: bool) {
         if cond {
             byte_utils::set_carry(&mut self.status);
@@ -674,11 +686,20 @@ impl CPU {
                 "BEQ" => {
                     self.branch_zero(true);
                 }
+
                 "BCC" => {
                     self.branch_carry(false);
                 }
                 "BCS" => {
                     self.branch_carry(true);
+                }
+
+
+                "BMI" => {
+                    self.branch_negative(true);
+                }
+                "BPL" => {
+                    self.branch_negative(false);
                 }
 
 

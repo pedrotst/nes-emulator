@@ -76,3 +76,39 @@ fn bcc_works () {
     assert_eq!(cpu.register_a, 0x00);
     assert_eq!(cpu.status, 0b0000_0011);
 }
+
+#[test]
+fn bpl_works () {
+    let mut cpu = CPU::new();
+
+    /*
+    This is a small program that loops exactly once
+    x until it is zero. More specifically:
+        LDA #$7d
+    increment:
+        ADC #$01
+        BPL increment
+        BRK
+    */
+    cpu.load_and_run(vec![0xa9, 0x7e, 0x69, 0x01, 0x10, 0xfc, 0x00]);
+    assert_eq!(cpu.register_a, 0x80);
+    assert_eq!(cpu.status, 0b1100_0000);
+}
+
+#[test]
+fn bmi_works () {
+    let mut cpu = CPU::new();
+
+    /*
+    This is a small program that loops exactly once
+    x until it is zero. More specifically:
+        LDA #$7d
+    increment:
+        ADC #$01
+        BPL increment
+        BRK
+    */
+    cpu.load_and_run(vec![0xa9, 0x8d, 0x69, 0xfe, 0x30, 0xfc, 0x00]);
+    assert_eq!(cpu.register_a, 0x7f);
+    assert_eq!(cpu.status, 0b0100_0001);
+}
