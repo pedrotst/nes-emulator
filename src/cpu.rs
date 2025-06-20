@@ -375,29 +375,28 @@ impl CPU {
         self.update_carry(carry1 || carry);
     }
 
-    fn branch(&mut self, beq: bool) {
-        dbg!("Running Branch");
+    fn branch_zero(&mut self, beq: bool) {
+        dbg!("Running BNE/BEQ");
         let offset = self.mem_read(self.program_counter);
-        println!("{:#X}", self.program_counter);
-        if byte_utils::is_zero_set(self.status) == beq {
-            println!("offset:   {:#X}", offset);
-            let x = offset as i8 as i16;
-            println!("toi16:    {:#X}", x);
-            println!(
-                "wrap_add: {:#X}",
-                self.program_counter.wrapping_add_signed(x)
-            );
-            self.program_counter = self.program_counter.wrapping_add_signed(x) + 1;
+        println!("initial:    {:#X}", self.program_counter);
 
+        if byte_utils::is_zero_set(self.status) == beq {
+            let x = offset as i8 as i16;
+            self.program_counter = self.program_counter.wrapping_add_signed(x) + 1;
             println!("final:    {:#X}", self.program_counter);
         }
-        /* iszero |  beq  |     condi
-            0     |   0   |       1 -> 0
-            1     |   0   |       1
-            0     |   1   |       0
-            1     |   1   |       1
+    }
 
-        */
+    fn branch_carry(&mut self, beq: bool) {
+        dbg!("Running BCC/BCS");
+        let offset = self.mem_read(self.program_counter);
+        println!("initial:    {:#X}", self.program_counter);
+
+        if byte_utils::is_carry_set(self.status) == beq {
+            let x = offset as i8 as i16;
+            self.program_counter = self.program_counter.wrapping_add_signed(x) + 1;
+            println!("final:    {:#X}", self.program_counter);
+        }
     }
 
     fn update_carry(&mut self, cond: bool) {
@@ -670,11 +669,18 @@ impl CPU {
 
                 /* Branch */
                 "BNE" => {
-                    self.branch(false);
+                    self.branch_zero(false);
                 }
                 "BEQ" => {
-                    self.branch(true);
+                    self.branch_zero(true);
                 }
+                "BCC" => {
+                    self.branch_carry(false);
+                }
+                "BCS" => {
+                    self.branch_carry(true);
+                }
+
 
                 /* Break */
                 "BRK" => {

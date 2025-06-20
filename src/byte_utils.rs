@@ -9,6 +9,15 @@ pub fn is_zero_set(flags: u8) -> bool {
     }
 }
 
+pub fn is_carry_set(flags: u8) -> bool {
+    if flags & 0b0000_0001 != 0 {
+        true
+    }
+    else {
+        false
+    }
+}
+
 pub fn get_carry(flags: u8) -> u8 {
     flags & 0b0000_0001
 }

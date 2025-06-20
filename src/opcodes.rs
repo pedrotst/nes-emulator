@@ -186,6 +186,9 @@ lazy_static! {
         OpCode::new(0xD0, "BNE", 2, 2 /* 3 branch, 4 page crossed */, AddressingMode::NoneAddressing),
         OpCode::new(0xF0, "BEQ", 2, 2 /* 3 branch, 4 page crossed */, AddressingMode::NoneAddressing),
 
+        OpCode::new(0x90, "BCC", 2, 2 /* 3 branch, 4 page crossed */, AddressingMode::NoneAddressing),
+        OpCode::new(0xB0, "BCS", 2, 2 /* 3 branch, 4 page crossed */, AddressingMode::NoneAddressing),
+
     ];
 
     pub static ref OPCODES_MAP: HashMap<u8, &'static OpCode> = {
