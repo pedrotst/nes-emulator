@@ -501,6 +501,18 @@ impl CPU {
         self.update_negative_flag(self.register_a);
     }
 
+    fn txs(&mut self){
+        dbg!("Running TXS");
+        self.stack_pointer = self.register_x;
+    }
+
+    fn tsx(&mut self){
+        dbg!("Running TSX");
+        self.register_x = self.stack_pointer;
+        self.update_negative_flag(self.register_x);
+        self.update_zero_flag(self.register_x);
+    }
+
     fn update_carry(&mut self, cond: bool) {
         if cond {
             byte_utils::set_carry(&mut self.status);
@@ -822,6 +834,13 @@ impl CPU {
                 }
                 "PLA" => {
                     self.pla();
+                }
+
+                "TXS" => {
+                    self.txs();
+                }
+                "TSX" => {
+                    self.tsx();
                 }
 
                 "NOP" => {
