@@ -465,7 +465,6 @@ impl CPU {
         }
     }
 
-    /* TODO: Implement Page Bug! */
     fn jmp(&mut self, mode: &AddressingMode) {
         dbg!("Running JMP");
         let addr = self.get_operand_address(mode);
@@ -617,7 +616,16 @@ impl CPU {
 
             AddressingMode::Indirect => {
                 let addr = self.mem_read_u16(self.program_counter);
-                self.mem_read_u16(addr)
+                
+                /* Implements the page bug of the jump */
+                if addr & 0x00FF == 0x00FF {
+                    let lo = self.mem_read(addr);
+                    let hi = self.mem_read(addr & 0xFF00);
+                    (hi as u16) << 8 | (lo as u16)
+                }
+                else {
+                    self.mem_read_u16(addr)
+                }
             }
 
             AddressingMode::Indirect_X => {
@@ -879,6 +887,7 @@ impl CPU {
                 /* Break */
                 "BRK" => {
                     self.brk();
+                    return;
                 }
 
                 _ => todo!(),
