@@ -513,6 +513,18 @@ impl CPU {
         self.update_zero_flag(self.register_x);
     }
 
+    /* TODO: Implement delayed effect of updating the I flag */
+    fn plp(&mut self) {
+        dbg!("Running PLP");
+        self.status = self.pop_stack() ;
+        self.status = (self.status | 0b0010_000) & 0b1110_1111;
+    }
+
+    fn php(&mut self) {
+        dbg!("Running PHP");
+        self.push_stack(self.status | 0b0011_0000);
+    }
+
     fn update_carry(&mut self, cond: bool) {
         if cond {
             byte_utils::set_carry(&mut self.status);
@@ -841,6 +853,13 @@ impl CPU {
                 }
                 "TSX" => {
                     self.tsx();
+                }
+
+                "PHP" => {
+                    self.php();
+                }
+                "PLP" => {
+                    self.plp();
                 }
 
                 "NOP" => {
