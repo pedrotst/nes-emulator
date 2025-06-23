@@ -73,8 +73,8 @@ impl CPU {
     }
 
     pub fn load(&mut self, program: Vec<u8>) {
-        self.memory[0x8000..(0x8000 + program.len())].copy_from_slice(&program[..]);
-        self.mem_write_u16(0xFFFC, 0x8000);
+        self.memory[0x600..(0x600 + program.len())].copy_from_slice(&program[..]);
+        self.mem_write_u16(0xFFFC, 0x600);
     }
 
     pub fn push_stack_u16(&mut self, data: u16) {
@@ -432,12 +432,11 @@ impl CPU {
     fn branch_carry(&mut self, beq: bool) {
         dbg!("Running BCC/BCS");
         let offset = self.mem_read(self.program_counter);
-        println!("initial:    {:#X}", self.program_counter);
+        println!("PC_before:    {:#X}", self.program_counter);
 
         if byte_utils::is_carry_set(self.status) == beq {
-            let x = offset as i8 as i16;
-            self.program_counter = self.program_counter.wrapping_add_signed(x) + 1;
-            println!("final:    {:#X}", self.program_counter);
+            self.program_counter = self.program_counter.wrapping_add(1).wrapping_add(offset as u16);
+            println!("PC_after:    {:#X}", self.program_counter);
         }
     }
 
@@ -478,6 +477,7 @@ impl CPU {
         let new_pc = self.get_operand_address(mode);
         self.push_stack_u16(self.program_counter + 1);
         self.program_counter = new_pc;
+        println!("new PC: {:#X}", self.program_counter);
     }
 
     fn rts(&mut self) {
@@ -516,6 +516,30 @@ impl CPU {
         self.register_x = self.stack_pointer;
         self.update_negative_flag(self.register_x);
         self.update_zero_flag(self.register_x);
+    }
+
+    fn inc(&mut self, mode:&AddressingMode ){
+        dbg!("Running INC");
+
+        let addr = self.get_operand_address(mode);
+        let value = self.mem_read(addr);
+        let x = value.wrapping_add(1);
+        self.mem_write(addr, x);
+
+        self.update_negative_flag(x);
+        self.update_zero_flag(x);
+    }
+
+    fn dec(&mut self, mode:&AddressingMode ){
+        dbg!("Running DEC");
+
+        let addr = self.get_operand_address(mode);
+        let value = self.mem_read(addr);
+        let x = value.wrapping_sub(1);
+        self.mem_write(addr, x);
+
+        self.update_negative_flag(x);
+        self.update_zero_flag(x);
     }
 
     /* TODO: Implement delayed effect of updating the I flag */
@@ -654,10 +678,18 @@ impl CPU {
         }
     }
 
-    pub fn run(&mut self) {
+    pub fn run (&mut self) {
+        self.run_with_callback(|_|{});
+    }
+
+    pub fn run_with_callback<F>(&mut self, mut callback: F) 
+    where
+        F: FnMut(&mut CPU),
+    {
         let ref opcodes: HashMap<u8, &'static opcodes::OpCode> = *opcodes::OPCODES_MAP;
 
         loop {
+            callback(self);
             println!("Entered loop");
             let code = self.mem_read(self.program_counter);
             println!("code: {:#X}", code);
@@ -885,11 +917,20 @@ impl CPU {
                     self.rti();
                 }
 
+                /* Memory */
+                "INC" => {
+                    self.inc(&opcode.mode);
+                }
+                "DEC" => {
+                    self.dec(&opcode.mode);
+                }
+
+
                 "NOP" => {}
 
                 /* Break */
                 "BRK" => {
-                    self.brk();
+                    // self.brk();
                     return;
                 }
 

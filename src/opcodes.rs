@@ -102,7 +102,7 @@ lazy_static! {
         OpCode::new(0x6A,"ROR_A", 1, 2, AddressingMode::NoneAddressing),
         OpCode::new(0x66, "ROR", 2, 5, AddressingMode::ZeroPage),
         OpCode::new(0x76, "ROR", 2, 6, AddressingMode::ZeroPage_X),
-        OpCode::new(0xE6, "ROR", 3, 6, AddressingMode::Absolute),
+        OpCode::new(0x6E, "ROR", 3, 6, AddressingMode::Absolute),
         OpCode::new(0x7E, "ROR", 3, 7, AddressingMode::Absolute_X),
 
         /* BITWISE */
@@ -214,6 +214,17 @@ lazy_static! {
         OpCode::new(0x28, "PLP", 1, 4                               , AddressingMode::NoneAddressing),
 
         OpCode::new(0x40, "RTI", 1, 6                               , AddressingMode::NoneAddressing),
+
+        /* Memory */
+        OpCode::new(0xE6, "INC", 2, 5                               , AddressingMode::ZeroPage),
+        OpCode::new(0xF6, "INC", 2, 6                               , AddressingMode::ZeroPage_X),
+        OpCode::new(0xEE, "INC", 3, 6                               , AddressingMode::Absolute),
+        OpCode::new(0xFE, "INC", 3, 7                               , AddressingMode::Absolute_X),
+
+        OpCode::new(0xC6, "DEC", 2, 5                               , AddressingMode::ZeroPage),
+        OpCode::new(0xD6, "DEC", 2, 6                               , AddressingMode::ZeroPage_X),
+        OpCode::new(0xCE, "DEC", 3, 6                               , AddressingMode::Absolute),
+        OpCode::new(0xDE, "DEC", 3, 7                               , AddressingMode::Absolute_X),
 
 
     ];
