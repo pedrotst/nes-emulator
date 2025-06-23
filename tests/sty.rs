@@ -1,12 +1,12 @@
-
 use nes_emulator::cpu::CPU;
+use nes_emulator::cpu::Mem;
 
 #[test]
 fn test_sty_zero_page() {
     let mut cpu = CPU::new();
     cpu.register_y = 0x55;
     cpu.load_and_run_no_reset(vec![0x84, 0x10, 0x00]);
-    let y = cpu.mem_read(0x10);
+    let y = cpu.bus.mem_read(0x10);
     assert_eq!(y, 0x55);
 }
 
@@ -16,7 +16,7 @@ fn test_sty_zero_page_x() {
     cpu.register_x = 0x01;
     cpu.register_y = 0x55;
     cpu.load_and_run_no_reset(vec![0x94, 0x10, 0x00]);
-    let y = cpu.mem_read(0x11);
+    let y = cpu.bus.mem_read(0x11);
     assert_eq!(y, 0x55);
 }
 

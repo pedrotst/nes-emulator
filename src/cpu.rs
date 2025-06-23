@@ -1,5 +1,7 @@
 use crate::byte_utils;
 use crate::opcodes;
+use crate::bus::Bus;
+
 use std::collections::HashMap;
 
 #[derive(Debug)]
@@ -18,6 +20,8 @@ pub enum AddressingMode {
     NoneAddressing,
 }
 
+const STACK_RESET: u8 = 0xFD;
+
 pub struct CPU {
     pub register_a: u8,
     pub register_x: u8,
@@ -25,8 +29,48 @@ pub struct CPU {
     pub status: u8,
     pub stack_pointer: u8,
     pub program_counter: u16,
-    memory: [u8; 0xFFFF],
+    // memory: [u8; 0xFFFF],
+    pub bus : Bus,
 }
+
+pub trait Mem {
+    fn mem_read(&self, addr: u16) -> u8;
+    fn mem_write(&mut self, addr: u16, data: u8);
+
+    fn mem_read_u16(&self, pos: u16) -> u16 {
+        let lo = self.mem_read(pos) as u16;
+        let hi = self.mem_read(pos + 1) as u16;
+        (hi << 8) | (lo as u16)
+    }
+
+    fn mem_write_u16(&mut self, pos: u16, data: u16) {
+        let hi = (data >> 8) as u8;
+        let lo = (data & 0xff) as u8;
+        self.mem_write(pos, lo);
+        self.mem_write(pos + 1, hi);
+    }
+}
+impl Mem for CPU {
+
+    fn mem_read(&self, addr: u16) -> u8 {
+        self.bus.mem_read(addr)
+        // self.memory[addr as usize]
+    }
+
+    fn mem_write(&mut self, addr: u16, data: u8) {
+        self.bus.mem_write(addr, data)
+        // self.memory[addr as usize] = data;
+    }
+
+    fn mem_read_u16(&self, pos: u16) -> u16 {
+        self.bus.mem_read_u16(pos)
+    }
+
+    fn mem_write_u16(&mut self, pos: u16, data: u16) {
+        self.bus.mem_write_u16(pos, data);
+    }
+}
+
 
 impl CPU {
     pub fn new() -> Self {
@@ -35,31 +79,12 @@ impl CPU {
             register_x: 0,
             register_y: 0,
             status: 0,
-            stack_pointer: 0xff,
+            stack_pointer: STACK_RESET,
             program_counter: 0,
-            memory: [0; 0xFFFF],
+            // memory: [0; 0xFFFF],
+            bus: Bus::new(),
+            
         }
-    }
-
-    pub fn mem_read(&self, addr: u16) -> u8 {
-        self.memory[addr as usize]
-    }
-
-    pub fn mem_write(&mut self, addr: u16, data: u8) {
-        self.memory[addr as usize] = data;
-    }
-
-    pub fn mem_read_u16(&mut self, pos: u16) -> u16 {
-        let lo = self.mem_read(pos) as u16;
-        let hi = self.mem_read(pos + 1) as u16;
-        (hi << 8) | (lo as u16)
-    }
-
-    pub fn mem_write_u16(&mut self, pos: u16, data: u16) {
-        let hi = (data >> 8) as u8;
-        let lo = (data & 0xff) as u8;
-        self.mem_write(pos, lo);
-        self.mem_write(pos + 1, hi);
     }
 
     pub fn reset(&mut self) {
@@ -73,8 +98,12 @@ impl CPU {
     }
 
     pub fn load(&mut self, program: Vec<u8>) {
-        self.memory[0x600..(0x600 + program.len())].copy_from_slice(&program[..]);
-        self.mem_write_u16(0xFFFC, 0x600);
+        // self.memory[0x600..(0x600 + program.len())].copy_from_slice(&program[..]);
+        // self.mem_write_u16(0xFFFC, 0x600);
+        for i in 0..(program.len() as u16) {
+            self.mem_write(0x0000 + i, program[i as usize]);
+        }
+        self.mem_write_u16(0xFFFC, 0x0000);
     }
 
     pub fn push_stack_u16(&mut self, data: u16) {
@@ -116,12 +145,7 @@ impl CPU {
     }
 
     pub fn load_and_run(&mut self, program: Vec<u8>) {
-        // dbg!(&program);
         self.load(program);
-        // dbg!(self.memory[0x8000]);
-        // dbg!(self.memory[0x8001]);
-        // dbg!(self.memory[0x8002]);
-        // dbg!(self.memory[0x8003]);
         self.reset();
         self.run();
     }
@@ -554,12 +578,14 @@ impl CPU {
         self.push_stack(self.status | 0b0011_0000);
     }
 
+    /* 
     fn brk(&mut self) {
         dbg!("Running BRK");
         self.push_stack_u16(self.program_counter + 2);
         self.push_stack(self.status | 0b0011_0000);
         self.program_counter = 0xFFFE;
     }
+    */
 
     fn update_carry(&mut self, cond: bool) {
         if cond {

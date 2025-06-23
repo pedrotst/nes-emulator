@@ -1,8 +1,10 @@
 use nes_emulator::cpu::CPU;
+use nes_emulator::cpu::Mem;
+
 #[test]
 fn test_and_zero_page() {
     let mut cpu = CPU::new();
-    cpu.mem_write(0x10, 0x01);
+    cpu.bus.mem_write(0x10, 0x01);
     cpu.register_a = 0xff;
     cpu.load_and_run_no_reset(vec![0x25, 0x10, 0x00]);
     let x = cpu.mem_read(0x10);
