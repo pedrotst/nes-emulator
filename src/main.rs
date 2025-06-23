@@ -61,7 +61,7 @@ fn main() {
 
     cpu.run_with_callback(move |cpu| {
         handle_user_input(cpu,&mut event_pump);
-        cpu.mem_write(0xf3, rng.gen_range(1, 16));
+        cpu.mem_write(0xfe, rng.gen_range(1, 16));
 
         if read_screen_state(cpu, &mut screen_state) {
             texture.update(None, &screen_state, 32 * 3).unwrap();
@@ -85,28 +85,28 @@ fn handle_user_input(cpu: &mut CPU, event_pump: &mut EventPump) {
             Event::KeyDown {
                 keycode: Some(Keycode::W),
                 ..
-            } => {
+            } | Event::KeyDown { keycode: Some(Keycode::Up), ..} => {
                 cpu.mem_write(0xff, 0x77);
             }
 
             Event::KeyDown {
                 keycode: Some(Keycode::S),
                 ..
-            } => {
+            } | Event::KeyDown { keycode: Some(Keycode::Down), ..} => {
                 cpu.mem_write(0xff, 0x73);
             }
 
             Event::KeyDown {
                 keycode: Some(Keycode::A),
                 ..
-            } => {
+            }  | Event::KeyDown { keycode: Some(Keycode::Left), ..} => {
                 cpu.mem_write(0xff, 0x61);
             }
 
             Event::KeyDown {
                 keycode: Some(Keycode::D),
                 ..
-            } => {
+            }  | Event::KeyDown { keycode: Some(Keycode::Right), ..} => {
                 cpu.mem_write(0xff, 0x64);
             }
 
