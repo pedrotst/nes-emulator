@@ -26,7 +26,7 @@ impl OpCode {
 
 lazy_static! {
     pub static ref CPU_OPS_CODES: Vec<OpCode> = vec![
-        OpCode::new(0x00, "BRK", 1, 7, AddressingMode::NoneAddressing),
+        OpCode::new(0x00, "BRK", 2, 7, AddressingMode::NoneAddressing),
         OpCode::new(0xea, "NOP", 1, 2, AddressingMode::NoneAddressing),
 
 

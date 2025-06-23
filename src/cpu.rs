@@ -525,6 +525,17 @@ impl CPU {
         self.push_stack(self.status | 0b0011_0000);
     }
 
+    fn brk(&mut self) {
+        dbg!("Running BRK");
+        let p = self.program_counter + 2;
+        let hi: u8 = (p >> 8) as u8;
+        let lo: u8 = (p & 0x00FF) as u8;
+        self.push_stack(lo);
+        self.push_stack(hi);
+        self.push_stack(self.status | 0b0011_0000);
+        self.program_counter = 0xFFFE;
+    }
+
     fn update_carry(&mut self, cond: bool) {
         if cond {
             byte_utils::set_carry(&mut self.status);
@@ -867,7 +878,7 @@ impl CPU {
 
                 /* Break */
                 "BRK" => {
-                    return;
+                    self.brk();
                 }
 
                 _ => todo!(),

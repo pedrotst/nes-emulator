@@ -66,7 +66,6 @@ pub fn set_negative(flags: &mut u8) {
     *flags |= 0b1000_0000;
 }
 
-
 /* ============ Unset Flags ============== */
 
 pub fn unset_carry(flags: &mut u8) {
