@@ -77,7 +77,7 @@ impl CPU {
         self.mem_write_u16(0xFFFC, 0x8000);
     }
 
-    pub fn push_stack_u16(&mut self, data: u16){
+    pub fn push_stack_u16(&mut self, data: u16) {
         let hi = 0x01;
         let addr = (hi << 8) | self.stack_pointer as u16;
         println!("pushing addr: {:#X}", addr);
@@ -85,7 +85,7 @@ impl CPU {
         self.mem_write_u16(addr, data);
         self.stack_pointer -= 2;
     }
-    
+
     pub fn pop_stack(&mut self) -> u8 {
         self.stack_pointer += 1;
         let hi = 0x01;
@@ -96,7 +96,7 @@ impl CPU {
         data
     }
 
-    pub fn push_stack(&mut self, data: u8){
+    pub fn push_stack(&mut self, data: u8) {
         let hi = 0x01;
         let addr = (hi << 8) | self.stack_pointer as u16;
         println!("pushing addr: {:#X}", addr);
@@ -104,7 +104,7 @@ impl CPU {
         self.mem_write(addr, data);
         self.stack_pointer -= 1;
     }
-    
+
     pub fn pop_stack_u16(&mut self) -> u16 {
         self.stack_pointer += 2;
         let hi = 0x01;
@@ -486,10 +486,16 @@ impl CPU {
         self.program_counter = new_pc + 1;
     }
 
+    fn rti(&mut self) {
+        dbg!("Running RTI");
+        self.status = self.pop_stack();
+        self.program_counter = self.pop_stack_u16();
+        self.status = (self.status | 0b0010_000) & 0b1110_1111;
+    }
+
     fn pha(&mut self) {
         dbg!("Running PHA");
         self.push_stack(self.register_a);
-
     }
 
     fn pla(&mut self) {
@@ -500,12 +506,12 @@ impl CPU {
         self.update_negative_flag(self.register_a);
     }
 
-    fn txs(&mut self){
+    fn txs(&mut self) {
         dbg!("Running TXS");
         self.stack_pointer = self.register_x;
     }
 
-    fn tsx(&mut self){
+    fn tsx(&mut self) {
         dbg!("Running TSX");
         self.register_x = self.stack_pointer;
         self.update_negative_flag(self.register_x);
@@ -515,7 +521,7 @@ impl CPU {
     /* TODO: Implement delayed effect of updating the I flag */
     fn plp(&mut self) {
         dbg!("Running PLP");
-        self.status = self.pop_stack() ;
+        self.status = self.pop_stack();
         self.status = (self.status | 0b0010_000) & 0b1110_1111;
     }
 
@@ -526,11 +532,7 @@ impl CPU {
 
     fn brk(&mut self) {
         dbg!("Running BRK");
-        let p = self.program_counter + 2;
-        let hi: u8 = (p >> 8) as u8;
-        let lo: u8 = (p & 0x00FF) as u8;
-        self.push_stack(lo);
-        self.push_stack(hi);
+        self.push_stack_u16(self.program_counter + 2);
         self.push_stack(self.status | 0b0011_0000);
         self.program_counter = 0xFFFE;
     }
@@ -616,14 +618,13 @@ impl CPU {
 
             AddressingMode::Indirect => {
                 let addr = self.mem_read_u16(self.program_counter);
-                
+
                 /* Implements the page bug of the jump */
                 if addr & 0x00FF == 0x00FF {
                     let lo = self.mem_read(addr);
                     let hi = self.mem_read(addr & 0xFF00);
                     (hi as u16) << 8 | (lo as u16)
-                }
-                else {
+                } else {
                     self.mem_read_u16(addr)
                 }
             }
@@ -880,9 +881,11 @@ impl CPU {
                 "PLP" => {
                     self.plp();
                 }
-
-                "NOP" => {
+                "RTI" => {
+                    self.rti();
                 }
+
+                "NOP" => {}
 
                 /* Break */
                 "BRK" => {
