@@ -2,10 +2,12 @@ pub mod byte_utils;
 pub mod cpu;
 pub mod opcodes;
 pub mod bus;
+pub mod cartridge;
 
 use cpu::Mem;
 use cpu::CPU;
 use bus::Bus;
+use cartridge::Rom;
 
 use rand::Rng;
 use sdl2::EventPump;
@@ -13,6 +15,10 @@ use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use sdl2::pixels::Color;
 use sdl2::pixels::PixelFormatEnum;
+
+use std::fs::File;
+use std::io::{self, BufRead, Read};
+use std::path::Path;
 
 fn main() {
     let game_code = vec![
@@ -56,8 +62,18 @@ fn main() {
         .create_texture_target(PixelFormatEnum::RGB24, 32, 32)
         .unwrap();
 
-    let mut cpu = CPU::new();
-    cpu.load(game_code);
+
+    let path = Path::new("roms/snake.nes");
+    let mut file = File::open(&path).unwrap();
+    let mut buffer = Vec::new();
+    file.read_to_end(&mut buffer).unwrap();
+
+    let rom = Rom::new(&buffer).unwrap();
+    let bus = Bus::new(rom);
+
+    let mut cpu = CPU::new(bus);
+    // cpu.load(game_code);
+    // cpu.load(program);
     cpu.reset();
 
     let mut screen_state = [0 as u8; 32 * 3 * 32];

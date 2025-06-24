@@ -1,6 +1,7 @@
 use crate::byte_utils;
 use crate::opcodes;
 use crate::bus::Bus;
+use crate::cartridge::Rom;
 
 use std::collections::HashMap;
 
@@ -73,7 +74,7 @@ impl Mem for CPU {
 
 
 impl CPU {
-    pub fn new() -> Self {
+    pub fn mock_cpu() -> Self {
         CPU {
             register_a: 0,
             register_x: 0,
@@ -82,7 +83,21 @@ impl CPU {
             stack_pointer: STACK_RESET,
             program_counter: 0,
             // memory: [0; 0xFFFF],
-            bus: Bus::new(),
+            bus: Bus::mock_bus(),
+            
+        }
+    }
+
+    pub fn new(bus: Bus) -> Self {
+        CPU {
+            register_a: 0,
+            register_x: 0,
+            register_y: 0,
+            status: 0,
+            stack_pointer: STACK_RESET,
+            program_counter: 0,
+            // memory: [0; 0xFFFF],
+            bus: bus,
             
         }
     }
