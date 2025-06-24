@@ -17,9 +17,9 @@ pub struct Rom {
     pub screen_mirroring: Mirroring,
 }
 
-pub fn mock_rom() -> Rom {
+pub fn mock_rom(code: Vec<u8>) -> Rom {
     Rom {
-        prg_rom : [].to_vec(),
+        prg_rom : code,
         chr_rom: [].to_vec(),
         mapper: 0,
         screen_mirroring: Mirroring::VERTICAL,

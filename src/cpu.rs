@@ -1,7 +1,6 @@
 use crate::byte_utils;
 use crate::opcodes;
 use crate::bus::Bus;
-use crate::cartridge::Rom;
 
 use std::collections::HashMap;
 
@@ -74,16 +73,16 @@ impl Mem for CPU {
 
 
 impl CPU {
-    pub fn mock_cpu() -> Self {
+    pub fn mock_cpu(code: Vec<u8>) -> Self {
         CPU {
             register_a: 0,
             register_x: 0,
             register_y: 0,
             status: 0,
             stack_pointer: STACK_RESET,
-            program_counter: 0,
+            program_counter: 0x8000,
             // memory: [0; 0xFFFF],
-            bus: Bus::mock_bus(),
+            bus: Bus::mock_bus(code),
             
         }
     }
@@ -107,7 +106,7 @@ impl CPU {
         self.register_x = 0;
         self.register_y = 0;
         self.status = 0;
-        self.stack_pointer = 0xff;
+        self.stack_pointer = STACK_RESET;
 
         self.program_counter = self.mem_read_u16(0xFFFC);
     }
@@ -116,9 +115,9 @@ impl CPU {
         // self.memory[0x600..(0x600 + program.len())].copy_from_slice(&program[..]);
         // self.mem_write_u16(0xFFFC, 0x600);
         for i in 0..(program.len() as u16) {
-            self.mem_write(0x0000 + i, program[i as usize]);
+            self.mem_write(0x8600 + i, program[i as usize]);
         }
-        self.mem_write_u16(0xFFFC, 0x0000);
+        self.mem_write_u16(0xFFFC, 0x8600);
     }
 
     pub fn push_stack_u16(&mut self, data: u16) {
@@ -474,7 +473,7 @@ impl CPU {
         println!("PC_before:    {:#X}", self.program_counter);
 
         if byte_utils::is_carry_set(self.status) == beq {
-            self.program_counter = self.program_counter.wrapping_add(1).wrapping_add(offset as u16);
+            self.program_counter = self.program_counter.wrapping_add(1).wrapping_add_signed(offset as i8 as i16);
             println!("PC_after:    {:#X}", self.program_counter);
         }
     }

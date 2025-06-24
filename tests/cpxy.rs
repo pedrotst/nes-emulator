@@ -2,10 +2,11 @@ use nes_emulator::cpu::CPU;
 
 #[test]
 fn cpx_negative() {
-    let mut cpu = CPU::new();
+    let mut cpu = CPU::mock_cpu(vec![0xE0, 0x01, 0x00]);
     cpu.register_x = 0x00;
 
-    cpu.load_and_run_no_reset(vec![0xE0, 0x01, 0x00]);
+    //cpu.load_and_run_no_reset();
+    cpu.run();
     // Compare doesn't change the register!
     assert_eq!(cpu.register_x, 0x00);
     /* 
@@ -20,20 +21,22 @@ fn cpx_negative() {
 }
 #[test]
 fn cpx_zero_carry() {
-    let mut cpu = CPU::new();
+    let mut cpu = CPU::mock_cpu(vec![0xE0, 0x01, 0x00]);
     cpu.register_x = 0x01;
 
-    cpu.load_and_run_no_reset(vec![0xE0, 0x01, 0x00]);
+    //cpu.load_and_run_no_reset();
+    cpu.run();
     assert_eq!(cpu.register_x, 0x01);
     assert_eq!(cpu.status, 0b0000_0011);
 }
 
 #[test]
 fn cpx_carry() {
-    let mut cpu = CPU::new();
+    let mut cpu = CPU::mock_cpu(vec![0xE0, 0x00, 0x00]);
     cpu.register_x = 0x01;
 
-    cpu.load_and_run_no_reset(vec![0xE0, 0x00, 0x00]);
+    //cpu.load_and_run_no_reset();
+    cpu.run();
     assert_eq!(cpu.register_x, 0x01);
     assert_eq!(cpu.status, 0b0000_0001);
 }
@@ -41,10 +44,11 @@ fn cpx_carry() {
 
 #[test]
 fn cpy_negative() {
-    let mut cpu = CPU::new();
+    let mut cpu = CPU::mock_cpu(vec![0xC0, 0x01, 0x00]);
     cpu.register_y = 0x00;
 
-    cpu.load_and_run_no_reset(vec![0xC0, 0x01, 0x00]);
+    //cpu.load_and_run_no_reset();
+    cpu.run();
     // Compare doesn't change the register!
     assert_eq!(cpu.register_y, 0x00);
     /* 
@@ -59,20 +63,22 @@ fn cpy_negative() {
 }
 #[test]
 fn cpy_zero_carry() {
-    let mut cpu = CPU::new();
+    let mut cpu = CPU::mock_cpu(vec![0xC0, 0x01, 0x00]);
     cpu.register_y = 0x01;
 
-    cpu.load_and_run_no_reset(vec![0xC0, 0x01, 0x00]);
+    //cpu.load_and_run_no_reset();
+    cpu.run();
     assert_eq!(cpu.register_y, 0x01);
     assert_eq!(cpu.status, 0b0000_0011);
 }
 
 #[test]
 fn cpy_carry() {
-    let mut cpu = CPU::new();
+    let mut cpu = CPU::mock_cpu(vec![0xC0, 0x00, 0x00]);
     cpu.register_y = 0x01;
 
-    cpu.load_and_run_no_reset(vec![0xC0, 0x00, 0x00]);
+    //cpu.load_and_run_no_reset();
+    cpu.run();
     assert_eq!(cpu.register_y, 0x01);
     assert_eq!(cpu.status, 0b0000_0001);
 }
@@ -80,10 +86,11 @@ fn cpy_carry() {
 
 #[test]
 fn cmp_negative() {
-    let mut cpu = CPU::new();
+    let mut cpu = CPU::mock_cpu(vec![0xc9, 0x01, 0x00]);
     cpu.register_a = 0x00;
 
-    cpu.load_and_run_no_reset(vec![0xc9, 0x01, 0x00]);
+    //cpu.load_and_run_no_reset();
+    cpu.run();
     // Compare doesn't change the register!
     assert_eq!(cpu.register_a, 0x00);
     /* 
@@ -98,20 +105,22 @@ fn cmp_negative() {
 }
 #[test]
 fn cmp_zero_carry() {
-    let mut cpu = CPU::new();
+    let mut cpu = CPU::mock_cpu(vec![0xc9, 0x01, 0x00]);
     cpu.register_a = 0x01;
 
-    cpu.load_and_run_no_reset(vec![0xc9, 0x01, 0x00]);
+    //cpu.load_and_run_no_reset();
+    cpu.run();
     assert_eq!(cpu.register_a, 0x01);
     assert_eq!(cpu.status, 0b0000_0011);
 }
 
 #[test]
 fn cmp_carry() {
-    let mut cpu = CPU::new();
+    let mut cpu = CPU::mock_cpu(vec![0xc9, 0x00, 0x00]);
     cpu.register_a = 0x01;
 
-    cpu.load_and_run_no_reset(vec![0xc9, 0x00, 0x00]);
+    //cpu.load_and_run_no_reset();
+    cpu.run();
     assert_eq!(cpu.register_a, 0x01);
     assert_eq!(cpu.status, 0b0000_0001);
 }

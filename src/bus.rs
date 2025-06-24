@@ -37,10 +37,10 @@ pub struct Bus {
 
 impl Bus {
     // Mock Bus
-    pub fn mock_bus() -> Self {
+    pub fn mock_bus(code: Vec<u8>) -> Self {
         Bus {
             cpu_vram: [0; 2048],
-            rom: mock_rom(),
+            rom: mock_rom(code),
         }
     }
 
