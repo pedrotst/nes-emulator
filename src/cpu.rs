@@ -911,12 +911,106 @@ impl CPU {
             .expect(&format!("OpCode {:x} is not recognized", code));
 
         let mut line = String::new();
-        line.push_str(&format!("{:X} ", self.program_counter));
+        line.push_str(&format!("{:X}  ", self.program_counter));
         // line.push_str(&format!("{:X} ", opcode.code));
-        for i in 0..=opcode.len-1 {
+        let mut codes: Vec<u8> = Vec::new();
+
+        for i in 0..=opcode.len - 1 {
             let code = self.mem_read(self.program_counter + i as u16);
             line.push_str(&format!("{:02X} ", code));
+            codes.push(code);
         }
+        if codes.len() < 3 {
+            for _i in 1..=codes.len() {
+                line.push_str(&"   ".to_string());
+            }
+        }
+
+        line.push_str(&format!("{} ", opcode.mneumonic));
+
+        match opcode.mode {
+            AddressingMode::Immediate => line.push_str(&format!("#${:02X} ", codes[1])),
+            AddressingMode::ZeroPage => {
+                line.push_str(&format!("${:02X} ", codes[1]));
+
+                let val = self.mem_read(codes[1] as u16);
+                line.push_str(&format!(" = {:02X} ", val))
+            }
+            AddressingMode::ZeroPage_X => {
+                line.push_str(&format!("${:02X},X @ ", codes[1]));
+
+                let pos = codes[1].wrapping_add(self.register_x);
+                let val = self.mem_read(pos as u16);
+
+                line.push_str(&format!("{:02X} = {:02X}", pos, val))
+            }
+            AddressingMode::ZeroPage_Y => {
+                line.push_str(&format!("${:02X},Y @ ", codes[1]));
+
+                let pos = codes[1].wrapping_add(self.register_y);
+                let val = self.mem_read(pos as u16);
+
+                line.push_str(&format!("{:02X} = {:02X} ", pos, val))
+            }
+            AddressingMode::Absolute => {
+                line.push_str(&format!("${:02X}{:02X} = ", codes[2], codes[1]));
+                let addr = (codes[2] as u16) << 8 | (codes[1] as u16);
+                let val = self.mem_read_u16(addr);
+                line.push_str(&format!("{:02X}", val));
+            }
+            AddressingMode::Absolute_X => {
+                line.push_str(&format!("${:02X}{:02X},X @ ", codes[2], codes[1]));
+
+                let base = (codes[2] as u16) << 8 | (codes[1] as u16);
+                let addr = base.wrapping_add(self.register_x as u16);
+                let val = self.mem_read_u16(addr);
+
+                line.push_str(&format!("{:02X} = {:02X} ", addr, val))
+            },
+            AddressingMode::Absolute_Y => {
+                line.push_str(&format!("${:02X}{:02X},Y ", codes[2], codes[1]));
+
+                let base = (codes[2] as u16) << 8 | (codes[1] as u16);
+                let addr = base.wrapping_add(self.register_y as u16);
+                let val = self.mem_read_u16(addr);
+
+                line.push_str(&format!("{:02X} = {:02X} ", addr, val))
+
+            },
+            AddressingMode::Indirect_X => {
+                line.push_str(&format!("(${:02X},X) @ ", codes[1]));
+
+                let base = self.mem_read(codes[1] as u16);
+                let ptr = base.wrapping_add(self.register_x);
+                let lo = self.mem_read(ptr as u16);
+                let hi = self.mem_read(ptr.wrapping_add(1) as u16);
+                let pos = (hi as u16) << 8 | (lo as u16);
+                let val = self.mem_read_u16(pos);
+
+                line.push_str(&format!("{:02X} = {:02X} = {:02X} ", base, pos, val))
+            },
+
+            AddressingMode::Indirect_Y => {
+                line.push_str(&format!("$({:02X}),Y ", codes[1]));
+
+                let base = self.mem_read(codes[1] as u16);
+
+                let lo = self.mem_read(base as u16);
+                let hi = self.mem_read((base as u8).wrapping_add(1) as u16);
+                let deref_base = (hi as u16) << 8 | (lo as u16);
+                let deref = deref_base.wrapping_add(self.register_y as u16);
+                let val = self.mem_read_u16(deref);
+
+                line.push_str(&format!("{:02X} = {:02X} = {:02X} ", base, deref, val))
+            },
+
+            AddressingMode::Indirect => line.push_str(&format!("$({:02X}) ", codes[1])),
+            AddressingMode::NoneAddressing => (),
+        }
+
+        line.push_str(&format!("A:{:02X} X:{:02X} Y:{:02X} P:{:02X} SP:{:02X}",
+            self.register_a, self.register_x, self.register_y, self.status, self.stack_pointer
+        ));
 
         line
     }
@@ -928,8 +1022,11 @@ mod test {
 
     #[test]
     fn test_trace() {
-        let mut cpu = CPU::mock_cpu(vec![0x6D, 0x01, 0x02, 0x00]);
-        assert_eq!(cpu.trace(),"8000 6D 01 02 ");
-        
+        let mut cpu = CPU::mock_cpu(vec![0x96, 0x80, 0x00]);
+        cpu.register_a = 0x47;
+        cpu.register_x = 0x69;
+        cpu.register_y = 0xff;
+
+        assert_eq!(cpu.trace(), "8000  96 80       STX $80,Y @ 7F = 00 A:47 X:69 Y:FF P:00 SP:FD");
     }
 }
