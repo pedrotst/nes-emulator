@@ -76,8 +76,11 @@ impl Rom {
     }
 }
 
-mod test {
-    use std::{fs::File, io::Read, path::{self, Path}};
+#[cfg(test)]
+pub mod test {
+    use std::io::Read;
+    use std::path::Path;
+    use std::fs::File;
 
     use super::*;
 
@@ -181,7 +184,7 @@ mod test {
 
         match res {
             Result::Ok(_) => assert!(true),
-            Result::Err(s) => assert!(false)
+            Result::Err(_) => assert!(false)
         }
 
 
