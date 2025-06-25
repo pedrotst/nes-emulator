@@ -1,6 +1,6 @@
+use crate::bus::Bus;
 use crate::byte_utils;
 use crate::opcodes;
-use crate::bus::Bus;
 
 use std::collections::HashMap;
 
@@ -30,7 +30,7 @@ pub struct CPU {
     pub stack_pointer: u8,
     pub program_counter: u16,
     // memory: [u8; 0xFFFF],
-    pub bus : Bus,
+    pub bus: Bus,
 }
 
 pub trait Mem {
@@ -51,7 +51,6 @@ pub trait Mem {
     }
 }
 impl Mem for CPU {
-
     fn mem_read(&self, addr: u16) -> u8 {
         self.bus.mem_read(addr)
         // self.memory[addr as usize]
@@ -71,7 +70,6 @@ impl Mem for CPU {
     }
 }
 
-
 impl CPU {
     pub fn mock_cpu(code: Vec<u8>) -> Self {
         CPU {
@@ -83,7 +81,6 @@ impl CPU {
             program_counter: 0x8000,
             // memory: [0; 0xFFFF],
             bus: Bus::mock_bus(code),
-            
         }
     }
 
@@ -97,7 +94,6 @@ impl CPU {
             program_counter: 0,
             // memory: [0; 0xFFFF],
             bus: bus,
-            
         }
     }
 
@@ -422,7 +418,10 @@ impl CPU {
         let offset = self.mem_read(self.program_counter);
 
         if byte_utils::is_carry_set(self.status) == beq {
-            self.program_counter = self.program_counter.wrapping_add(1).wrapping_add_signed(offset as i8 as i16);
+            self.program_counter = self
+                .program_counter
+                .wrapping_add(1)
+                .wrapping_add_signed(offset as i8 as i16);
         }
     }
 
@@ -488,8 +487,7 @@ impl CPU {
         self.update_zero_flag(self.register_x);
     }
 
-    fn inc(&mut self, mode:&AddressingMode ){
-
+    fn inc(&mut self, mode: &AddressingMode) {
         let addr = self.get_operand_address(mode);
         let value = self.mem_read(addr);
         let x = value.wrapping_add(1);
@@ -499,7 +497,7 @@ impl CPU {
         self.update_zero_flag(x);
     }
 
-    fn dec(&mut self, mode:&AddressingMode ){
+    fn dec(&mut self, mode: &AddressingMode) {
         let addr = self.get_operand_address(mode);
         let value = self.mem_read(addr);
         let x = value.wrapping_sub(1);
@@ -519,7 +517,7 @@ impl CPU {
         self.push_stack(self.status | 0b0011_0000);
     }
 
-    /* 
+    /*
     fn brk(&mut self) {
         self.push_stack_u16(self.program_counter + 2);
         self.push_stack(self.status | 0b0011_0000);
@@ -644,11 +642,11 @@ impl CPU {
         }
     }
 
-    pub fn run (&mut self) {
-        self.run_with_callback(|_|{});
+    pub fn run(&mut self) {
+        self.run_with_callback(|_| {});
     }
 
-    pub fn run_with_callback<F>(&mut self, mut callback: F) 
+    pub fn run_with_callback<F>(&mut self, mut callback: F)
     where
         F: FnMut(&mut CPU),
     {
@@ -887,7 +885,6 @@ impl CPU {
                     self.dec(&opcode.mode);
                 }
 
-
                 "NOP" => {}
 
                 /* Break */
@@ -904,7 +901,35 @@ impl CPU {
             }
         }
     }
+
+    pub fn trace(&mut self) -> String {
+        let ref opcodes: HashMap<u8, &'static opcodes::OpCode> = *opcodes::OPCODES_MAP;
+        let code = self.mem_read(self.program_counter);
+
+        let opcode = opcodes
+            .get(&code)
+            .expect(&format!("OpCode {:x} is not recognized", code));
+
+        let mut line = String::new();
+        line.push_str(&format!("{:X} ", self.program_counter));
+        // line.push_str(&format!("{:X} ", opcode.code));
+        for i in 0..=opcode.len-1 {
+            let code = self.mem_read(self.program_counter + i as u16);
+            line.push_str(&format!("{:02X} ", code));
+        }
+
+        line
+    }
 }
 
 #[cfg(test)]
-mod test {}
+mod test {
+    use super::*;
+
+    #[test]
+    fn test_trace() {
+        let mut cpu = CPU::mock_cpu(vec![0x6D, 0x01, 0x02, 0x00]);
+        assert_eq!(cpu.trace(),"8000 6D 01 02 ");
+        
+    }
+}

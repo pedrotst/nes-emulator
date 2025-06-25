@@ -57,6 +57,7 @@ fn main() {
     let mut rng = rand::thread_rng();
 
     cpu.run_with_callback(move |cpu| {
+        // println!("{}", trace(cpu));
         handle_user_input(cpu,&mut event_pump);
         cpu.mem_write(0xfe, rng.gen_range(1, 16));
 
