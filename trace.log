@@ -1,0 +1,63 @@
+C000  4C F5 C5  JMP $C5F5 = A2                       A:00 X:00 Y:00 P:00 SP:FD
+C5F5  A2 00     LDX #$00                        A:00 X:00 Y:00 P:00 SP:FD
+C5F7  86 00     STX $00 = 00                    A:00 X:00 Y:00 P:02 SP:FD
+C5F9  86 10     STX $10 = 00                    A:00 X:00 Y:00 P:02 SP:FD
+C5FB  86 11     STX $11 = 00                    A:00 X:00 Y:00 P:02 SP:FD
+C5FD  20 2D C7  JSR $C72D = 38EA                       A:00 X:00 Y:00 P:02 SP:FD
+C72D  EA        NOP                             A:00 X:00 Y:00 P:02 SP:FB
+C72E  38        SEC                             A:00 X:00 Y:00 P:02 SP:FB
+C72F  B0 04     BCS $C735                       A:00 X:00 Y:00 P:03 SP:FB
+C735  EA        NOP                             A:00 X:00 Y:00 P:03 SP:FB
+C736  18        CLC                             A:00 X:00 Y:00 P:03 SP:FB
+C737  B0 03     BCS $C73C                       A:00 X:00 Y:00 P:02 SP:FB
+C739  4C 40 C7  JMP $C740 = 38EA                       A:00 X:00 Y:00 P:02 SP:FB
+C740  EA        NOP                             A:00 X:00 Y:00 P:02 SP:FB
+C741  38        SEC                             A:00 X:00 Y:00 P:02 SP:FB
+C742  90 03     BCC $C747                       A:00 X:00 Y:00 P:03 SP:FB
+C744  4C 4B C7  JMP $C74B = 18EA                       A:00 X:00 Y:00 P:03 SP:FB
+C74B  EA        NOP                             A:00 X:00 Y:00 P:03 SP:FB
+C74C  18        CLC                             A:00 X:00 Y:00 P:03 SP:FB
+C74D  90 04     BCC $C753                       A:00 X:00 Y:00 P:02 SP:FB
+C753  EA        NOP                             A:00 X:00 Y:00 P:02 SP:FB
+C754  A9 00     LDA #$00                        A:00 X:00 Y:00 P:02 SP:FB
+C756  F0 04     BEQ $C75C                       A:00 X:00 Y:00 P:02 SP:FB
+C75C  EA        NOP                             A:00 X:00 Y:00 P:02 SP:FB
+C75D  A9 40     LDA #$40                        A:00 X:00 Y:00 P:02 SP:FB
+C75F  F0 03     BEQ $C764                       A:40 X:00 Y:00 P:00 SP:FB
+C761  4C 68 C7  JMP $C768 = A9EA                       A:40 X:00 Y:00 P:00 SP:FB
+C768  EA        NOP                             A:40 X:00 Y:00 P:00 SP:FB
+C769  A9 40     LDA #$40                        A:40 X:00 Y:00 P:00 SP:FB
+C76B  D0 04     BNE $C771                       A:40 X:00 Y:00 P:00 SP:FB
+C771  EA        NOP                             A:40 X:00 Y:00 P:00 SP:FB
+C772  A9 00     LDA #$00                        A:40 X:00 Y:00 P:00 SP:FB
+C774  D0 03     BNE $C779                       A:00 X:00 Y:00 P:02 SP:FB
+C776  4C 7D C7  JMP $C77D = A9EA                       A:00 X:00 Y:00 P:02 SP:FB
+C77D  EA        NOP                             A:00 X:00 Y:00 P:02 SP:FB
+C77E  A9 FF     LDA #$FF                        A:00 X:00 Y:00 P:02 SP:FB
+C780  85 01     STA $01 = 00                    A:FF X:00 Y:00 P:80 SP:FB
+C782  24 01     BIT $01 = FF                    A:FF X:00 Y:00 P:80 SP:FB
+C784  70 04     BVS $C78A                       A:FF X:00 Y:00 P:C0 SP:FB
+C78A  EA        NOP                             A:FF X:00 Y:00 P:C0 SP:FB
+C78B  24 01     BIT $01 = FF                    A:FF X:00 Y:00 P:C0 SP:FB
+C78D  50 03     BVC $C792                       A:FF X:00 Y:00 P:C0 SP:FB
+C78F  4C 96 C7  JMP $C796 = A9EA                       A:FF X:00 Y:00 P:C0 SP:FB
+C796  EA        NOP                             A:FF X:00 Y:00 P:C0 SP:FB
+C797  A9 00     LDA #$00                        A:FF X:00 Y:00 P:C0 SP:FB
+C799  85 01     STA $01 = FF                    A:00 X:00 Y:00 P:42 SP:FB
+C79B  24 01     BIT $01 = 00                    A:00 X:00 Y:00 P:42 SP:FB
+C79D  50 04     BVC $C7A3                       A:00 X:00 Y:00 P:42 SP:FB
+C79F  A2 0B     LDX #$0B                        A:00 X:00 Y:00 P:42 SP:FB
+C7A1  86 00     STX $00 = 00                    A:00 X:0B Y:00 P:40 SP:FB
+C7A3  EA        NOP                             A:00 X:0B Y:00 P:40 SP:FB
+C7A4  24 01     BIT $01 = 00                    A:00 X:0B Y:00 P:40 SP:FB
+C7A6  70 03     BVS $C7AB                       A:00 X:0B Y:00 P:42 SP:FB
+C7AB  A2 0C     LDX #$0C                        A:00 X:0B Y:00 P:42 SP:FB
+C7AD  86 00     STX $00 = 0B                    A:00 X:0C Y:00 P:40 SP:FB
+C7AF  EA        NOP                             A:00 X:0C Y:00 P:40 SP:FB
+C7B0  A9 00     LDA #$00                        A:00 X:0C Y:00 P:40 SP:FB
+C7B2  10 04     BPL $C7B8                       A:00 X:0C Y:00 P:42 SP:FB
+C7B8  EA        NOP                             A:00 X:0C Y:00 P:42 SP:FB
+C7B9  A9 80     LDA #$80                        A:00 X:0C Y:00 P:42 SP:FB
+C7BB  10 03     BPL $C7C0                       A:80 X:0C Y:00 P:C0 SP:FB
+C7BD  4C D9 C7  JMP $C7D9 = 60EA                       A:80 X:0C Y:00 P:C0 SP:FB
+C7D9  EA        NOP                             A:80 X:0C Y:00 P:C0 SP:FB

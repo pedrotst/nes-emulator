@@ -23,7 +23,7 @@ pub fn trace(cpu: &mut CPU) -> String {
     }
 
     // Pad when there are less than 2 arguments for opcode
-    for _i in 0..=2 - codes.len() {
+    for _i in 1..=3 - codes.len() {
         line.push_str(&"   ".to_string());
     }
     line.push_str(&" ".to_string());
@@ -39,7 +39,16 @@ pub fn trace(cpu: &mut CPU) -> String {
             line.push_str(&format!("${:02X} ", codes[1]));
 
             let val = cpu.mem_read(codes[1] as u16);
-            line.push_str(&format!(" = {:02X} ", val))
+            line.push_str(&format!("= {:02X} ", val));
+            line.push_str("                   ")
+        }
+        AddressingMode::Relative => {
+            let val = cpu
+                .program_counter
+                .wrapping_add(2) // +2 because the PC is one off
+                .wrapping_add_signed(codes[1] as i8 as i16);
+            line.push_str(&format!("${:02X} ", val));
+            line.push_str("                      ")
         }
         AddressingMode::ZeroPage_X => {
             line.push_str(&format!("${:02X},X @ ", codes[1]));

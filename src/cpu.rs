@@ -17,6 +17,7 @@ pub enum AddressingMode {
     Indirect,
     Indirect_X,
     Indirect_Y,
+    Relative,
     NoneAddressing,
 }
 
@@ -405,41 +406,14 @@ impl CPU {
         self.update_carry(carry1 || carry);
     }
 
-    fn branch_zero(&mut self, beq: bool) {
+    fn branch(&mut self, cmp: bool) {
         let offset = self.mem_read(self.program_counter);
 
-        if byte_utils::is_zero_set(self.status) == beq {
-            let x = offset as i8 as i16;
-            self.program_counter = self.program_counter.wrapping_add_signed(x) + 1;
-        }
-    }
-
-    fn branch_carry(&mut self, beq: bool) {
-        let offset = self.mem_read(self.program_counter);
-
-        if byte_utils::is_carry_set(self.status) == beq {
+        if cmp {
             self.program_counter = self
                 .program_counter
                 .wrapping_add(1)
                 .wrapping_add_signed(offset as i8 as i16);
-        }
-    }
-
-    fn branch_negative(&mut self, beq: bool) {
-        let offset = self.mem_read(self.program_counter);
-
-        if byte_utils::is_negative_set(self.status) == beq {
-            let x = offset as i8 as i16;
-            self.program_counter = self.program_counter.wrapping_add_signed(x) + 1;
-        }
-    }
-
-    fn branch_overflow(&mut self, beq: bool) {
-        let offset = self.mem_read(self.program_counter);
-
-        if byte_utils::is_overflow_set(self.status) == beq {
-            let x = offset as i8 as i16;
-            self.program_counter = self.program_counter.wrapping_add_signed(x) + 1;
         }
     }
 
@@ -636,6 +610,8 @@ impl CPU {
                 deref
             }
 
+            AddressingMode::Relative => 0 ,
+
             AddressingMode::NoneAddressing => {
                 panic!("mode {:?} is not supported", mode)
             }
@@ -813,31 +789,31 @@ impl CPU {
 
                 /* Branch */
                 "BNE" => {
-                    self.branch_zero(false);
+                    self.branch(byte_utils::is_zero_set(self.status) == false);
                 }
                 "BEQ" => {
-                    self.branch_zero(true);
+                    self.branch(byte_utils::is_zero_set(self.status) == true);
                 }
 
                 "BCC" => {
-                    self.branch_carry(false);
+                    self.branch(byte_utils::is_carry_set(self.status) == false);
                 }
                 "BCS" => {
-                    self.branch_carry(true);
+                    self.branch(byte_utils::is_carry_set(self.status) == true);
                 }
 
                 "BMI" => {
-                    self.branch_negative(true);
+                    self.branch(byte_utils::is_negative_set(self.status) == true);
                 }
                 "BPL" => {
-                    self.branch_negative(false);
+                    self.branch(byte_utils::is_negative_set(self.status) == false);
                 }
 
                 "BVC" => {
-                    self.branch_overflow(false);
+                    self.branch(byte_utils::is_overflow_set(self.status) == false);
                 }
                 "BVS" => {
-                    self.branch_overflow(true);
+                    self.branch(byte_utils::is_overflow_set(self.status) == true);
                 }
 
                 "JMP" => {

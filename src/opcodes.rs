@@ -185,23 +185,24 @@ lazy_static! {
         OpCode::new(0xF1, "SBC", 2, 5 /* +1 */, AddressingMode::Indirect_Y),
 
         /* Branch */
-        OpCode::new(0xD0, "BNE", 2, 2 /* 3 branch, 4 page crossed */, AddressingMode::NoneAddressing),
-        OpCode::new(0xF0, "BEQ", 2, 2 /* 3 branch, 4 page crossed */, AddressingMode::NoneAddressing),
+        OpCode::new(0xD0, "BNE", 2, 2 /* 3 branch, 4 page crossed */, AddressingMode::Relative),
+        OpCode::new(0xF0, "BEQ", 2, 2 /* 3 branch, 4 page crossed */, AddressingMode::Relative),
 
-        OpCode::new(0x90, "BCC", 2, 2 /* 3 branch, 4 page crossed */, AddressingMode::NoneAddressing),
-        OpCode::new(0xB0, "BCS", 2, 2 /* 3 branch, 4 page crossed */, AddressingMode::NoneAddressing),
+        OpCode::new(0x90, "BCC", 2, 2 /* 3 branch, 4 page crossed */, AddressingMode::Relative),
+        OpCode::new(0xB0, "BCS", 2, 2 /* 3 branch, 4 page crossed */, AddressingMode::Relative),
 
-        OpCode::new(0x30, "BMI", 2, 2 /* 3 branch, 4 page crossed */, AddressingMode::NoneAddressing),
-        OpCode::new(0x10, "BPL", 2, 2 /* 3 branch, 4 page crossed */, AddressingMode::NoneAddressing),
+        OpCode::new(0x30, "BMI", 2, 2 /* 3 branch, 4 page crossed */, AddressingMode::Relative),
+        OpCode::new(0x10, "BPL", 2, 2 /* 3 branch, 4 page crossed */, AddressingMode::Relative),
 
-        OpCode::new(0x50, "BVC", 2, 2 /* 3 branch, 4 page crossed */, AddressingMode::NoneAddressing),
-        OpCode::new(0x70, "BVS", 2, 2 /* 3 branch, 4 page crossed */, AddressingMode::NoneAddressing),
+        OpCode::new(0x50, "BVC", 2, 2 /* 3 branch, 4 page crossed */, AddressingMode::Relative),
+        OpCode::new(0x70, "BVS", 2, 2 /* 3 branch, 4 page crossed */, AddressingMode::Relative),
+
+        OpCode::new(0x60, "RTS", 1, 6                               , AddressingMode::Relative),
 
         OpCode::new(0x4C, "JMP", 3, 3                               , AddressingMode::Absolute),
         OpCode::new(0x6C, "JMP", 3, 5                               , AddressingMode::Indirect),
 
         OpCode::new(0x20, "JSR", 3, 6                               , AddressingMode::Absolute),
-        OpCode::new(0x60, "RTS", 1, 6                               , AddressingMode::NoneAddressing),
 
         /* Stack Operations */
         OpCode::new(0x48, "PHA", 1, 3                               , AddressingMode::NoneAddressing),
