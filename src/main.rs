@@ -3,6 +3,7 @@ pub mod cpu;
 pub mod opcodes;
 pub mod bus;
 pub mod cartridge;
+pub mod trace;
 
 use cpu::Mem;
 use cpu::CPU;
