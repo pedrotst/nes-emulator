@@ -89,7 +89,7 @@ impl CPU {
             register_a: 0,
             register_x: 0,
             register_y: 0,
-            status: 0,
+            status: 0b0001_00100,
             stack_pointer: STACK_RESET,
             program_counter: 0,
             // memory: [0; 0xFFFF],
@@ -911,7 +911,7 @@ impl CPU {
             .expect(&format!("OpCode {:x} is not recognized", code));
 
         let mut line = String::new();
-        line.push_str(&format!("{:X}  ", self.program_counter));
+        line.push_str(&format!("{:04X}  ", self.program_counter));
         // line.push_str(&format!("{:X} ", opcode.code));
         let mut codes: Vec<u8> = Vec::new();
 
@@ -920,16 +920,20 @@ impl CPU {
             line.push_str(&format!("{:02X} ", code));
             codes.push(code);
         }
-        if codes.len() < 3 {
-            for _i in 1..=codes.len() {
-                line.push_str(&"   ".to_string());
-            }
+
+        // Pad when there are less than 2 arguments for opcode
+        for _i in 0..=2 - codes.len() {
+            line.push_str(&"   ".to_string());
         }
+        line.push_str(&" ".to_string());
 
         line.push_str(&format!("{} ", opcode.mneumonic));
 
         match opcode.mode {
-            AddressingMode::Immediate => line.push_str(&format!("#${:02X} ", codes[1])),
+            AddressingMode::Immediate => {
+                line.push_str(&format!("#${:02X} ", codes[1]));
+                line.push_str("                       ");
+            }
             AddressingMode::ZeroPage => {
                 line.push_str(&format!("${:02X} ", codes[1]));
 
@@ -957,6 +961,7 @@ impl CPU {
                 let addr = (codes[2] as u16) << 8 | (codes[1] as u16);
                 let val = self.mem_read_u16(addr);
                 line.push_str(&format!("{:02X}", val));
+                line.push_str("                       ");
             }
             AddressingMode::Absolute_X => {
                 line.push_str(&format!("${:02X}{:02X},X @ ", codes[2], codes[1]));
@@ -966,7 +971,7 @@ impl CPU {
                 let val = self.mem_read_u16(addr);
 
                 line.push_str(&format!("{:02X} = {:02X} ", addr, val))
-            },
+            }
             AddressingMode::Absolute_Y => {
                 line.push_str(&format!("${:02X}{:02X},Y ", codes[2], codes[1]));
 
@@ -975,8 +980,7 @@ impl CPU {
                 let val = self.mem_read_u16(addr);
 
                 line.push_str(&format!("{:02X} = {:02X} ", addr, val))
-
-            },
+            }
             AddressingMode::Indirect_X => {
                 line.push_str(&format!("(${:02X},X) @ ", codes[1]));
 
@@ -988,27 +992,26 @@ impl CPU {
                 let val = self.mem_read_u16(pos);
 
                 line.push_str(&format!("{:02X} = {:02X} = {:02X} ", base, pos, val))
-            },
+            }
 
             AddressingMode::Indirect_Y => {
-                line.push_str(&format!("$({:02X}),Y ", codes[1]));
+                line.push_str(&format!("(${:02X}),Y ", codes[1]));
 
-                let base = self.mem_read(codes[1] as u16);
-
-                let lo = self.mem_read(base as u16);
-                let hi = self.mem_read((base as u8).wrapping_add(1) as u16);
+                let lo = self.mem_read(codes[1] as u16);
+                let hi = self.mem_read(codes[1].wrapping_add(1) as u16);
                 let deref_base = (hi as u16) << 8 | (lo as u16);
                 let deref = deref_base.wrapping_add(self.register_y as u16);
                 let val = self.mem_read_u16(deref);
 
-                line.push_str(&format!("{:02X} = {:02X} = {:02X} ", base, deref, val))
-            },
+                line.push_str(&format!("= {:04X} @ {:04X} = {:02X}  ", deref_base, deref, val))
+            }
 
             AddressingMode::Indirect => line.push_str(&format!("$({:02X}) ", codes[1])),
-            AddressingMode::NoneAddressing => (),
+            AddressingMode::NoneAddressing => line.push_str("                            "),
         }
 
-        line.push_str(&format!("A:{:02X} X:{:02X} Y:{:02X} P:{:02X} SP:{:02X}",
+        line.push_str(&format!(
+            "A:{:02X} X:{:02X} Y:{:02X} P:{:02X} SP:{:02X}",
             self.register_a, self.register_x, self.register_y, self.status, self.stack_pointer
         ));
 
@@ -1019,6 +1022,7 @@ impl CPU {
 #[cfg(test)]
 mod test {
     use super::*;
+    use crate::cartridge::*;
 
     #[test]
     fn test_trace() {
@@ -1027,6 +1031,69 @@ mod test {
         cpu.register_x = 0x69;
         cpu.register_y = 0xff;
 
-        assert_eq!(cpu.trace(), "8000  96 80       STX $80,Y @ 7F = 00 A:47 X:69 Y:FF P:00 SP:FD");
+        assert_eq!(
+            cpu.trace(),
+            "8000  96 80       STX $80,Y @ 7F = 00 A:47 X:69 Y:FF P:00 SP:FD"
+        );
     }
+
+    #[test]
+    fn test_format_trace() {
+        let mut bus = Bus::new(mock_rom(vec![]));
+        bus.mem_write(100, 0xa2);
+        bus.mem_write(101, 0x01);
+        bus.mem_write(102, 0xca);
+        bus.mem_write(103, 0x88);
+        bus.mem_write(104, 0x00);
+
+        let mut cpu = CPU::new(bus);
+        cpu.program_counter = 0x64;
+        cpu.register_a = 1;
+        cpu.register_x = 2;
+        cpu.register_y = 3;
+        let mut result: Vec<String> = vec![];
+        cpu.run_with_callback(|cpu| {
+            result.push(cpu.trace());
+        });
+        assert_eq!(
+            "0064  A2 01     LDX #$01                        A:01 X:02 Y:03 P:24 SP:FD",
+            result[0]
+        );
+        assert_eq!(
+            "0066  CA        DEX                             A:01 X:01 Y:03 P:24 SP:FD",
+            result[1]
+        );
+        assert_eq!(
+            "0067  88        DEY                             A:01 X:00 Y:03 P:26 SP:FD",
+            result[2]
+        );
+    }
+
+   #[test]
+   fn test_format_mem_access() {
+       let mut bus = Bus::new(mock_rom(vec![]));
+       // ORA ($33), Y
+       bus.mem_write(100, 0x11);
+       bus.mem_write(101, 0x33);
+
+
+       //data
+       bus.mem_write(0x33, 00);
+       bus.mem_write(0x34, 04);
+
+       //target cell
+       bus.mem_write(0x400, 0xAA);
+
+       let mut cpu = CPU::new(bus);
+       cpu.program_counter = 0x64;
+       cpu.register_y = 0;
+       let mut result: Vec<String> = vec![];
+       cpu.run_with_callback(|cpu| {
+           result.push(cpu.trace());
+       });
+       assert_eq!(
+           "0064  11 33     ORA ($33),Y = 0400 @ 0400 = AA  A:00 X:00 Y:00 P:24 SP:FD",
+           result[0]
+       );
+   }
 }
