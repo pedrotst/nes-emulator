@@ -9,8 +9,9 @@ use cpu::Mem;
 use cpu::CPU;
 use bus::Bus;
 use cartridge::Rom;
+use trace::trace;
 
-use rand::Rng;
+// use rand::Rng;
 use sdl2::EventPump;
 use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
@@ -20,6 +21,10 @@ use sdl2::pixels::PixelFormatEnum;
 use std::fs::File;
 use std::io::Read;
 use std::path::Path;
+
+
+// const ROM: &str = "snake.nes";
+const ROM: &str = "nestest.nes";
 
 fn main() {
 
@@ -41,7 +46,8 @@ fn main() {
         .unwrap();
 
 
-    let path = Path::new("roms/snake.nes");
+    let path = Path::new("roms/").join(ROM);
+
     let mut file = File::open(&path).unwrap();
     let mut buffer = Vec::new();
     file.read_to_end(&mut buffer).unwrap();
@@ -53,12 +59,18 @@ fn main() {
     // cpu.load(game_code);
     // cpu.load(program);
     cpu.reset();
+    cpu.program_counter = 0xC000;
 
-    let mut screen_state = [0 as u8; 32 * 3 * 32];
-    let mut rng = rand::thread_rng();
 
     cpu.run_with_callback(move |cpu| {
+        println!("{}", trace(cpu));
+    });
+    /* 
+    let mut screen_state = [0 as u8; 32 * 3 * 32];
+    let mut rng = rand::thread_rng();
+    cpu.run_with_callback(move |cpu| {
         // println!("{}", trace(cpu));
+        println!(trace(cpu));
         handle_user_input(cpu,&mut event_pump);
         cpu.mem_write(0xfe, rng.gen_range(1, 16));
 
@@ -68,7 +80,7 @@ fn main() {
             canvas.present();
         }
         ::std::thread::sleep(std::time::Duration::new(0, 70_000));
-    });
+    });*/
 }
 
 fn handle_user_input(cpu: &mut CPU, event_pump: &mut EventPump) {
