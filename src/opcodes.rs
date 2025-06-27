@@ -152,7 +152,7 @@ lazy_static! {
         OpCode::new(0xEC, "CPX", 3, 4,          AddressingMode::Absolute),
 
         OpCode::new(0xC0, "CPY", 2, 2,          AddressingMode::Immediate),
-        OpCode::new(0xC4, "CPY", 3, 3,          AddressingMode::ZeroPage),
+        OpCode::new(0xC4, "CPY", 2, 3,          AddressingMode::ZeroPage),
         OpCode::new(0xCC, "CPY", 3, 4,          AddressingMode::Absolute),
 
         /* Flags Management */
