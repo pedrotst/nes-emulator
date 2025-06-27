@@ -56,7 +56,7 @@ pub fn trace(cpu: &mut CPU) -> String {
             let pos = codes[1].wrapping_add(cpu.register_x);
             let val = cpu.mem_read(pos as u16);
 
-            line.push_str(&format!("{:02X} = {:02X}", pos, val))
+            line.push_str(&format!("{:02X} = {:02X}             ", pos, val))
         }
         AddressingMode::ZeroPage_Y => {
             line.push_str(&format!("${:02X},Y @ ", codes[1]));
@@ -64,7 +64,7 @@ pub fn trace(cpu: &mut CPU) -> String {
             let pos = codes[1].wrapping_add(cpu.register_y);
             let val = cpu.mem_read(pos as u16);
 
-            line.push_str(&format!("{:02X} = {:02X} ", pos, val))
+            line.push_str(&format!("{:02X} = {:02X}             ", pos, val))
         }
         AddressingMode::Absolute => {
             line.push_str(&format!("${:02X}{:02X}", codes[2], codes[1]));
@@ -78,18 +78,17 @@ pub fn trace(cpu: &mut CPU) -> String {
             }
         }
         AddressingMode::Absolute_X => {
-            line.push_str(&format!("${:02X}{:02X},X @ ", codes[2], codes[1]));
-
             let base = (codes[2] as u16) << 8 | (codes[1] as u16);
+            line.push_str(&format!("${:04X},X @ ", base));
             let addr = base.wrapping_add(cpu.register_x as u16);
             let val = cpu.mem_read(addr);
 
             line.push_str(&format!("{:04X} = {:02X}         ", addr, val))
         }
         AddressingMode::Absolute_Y => {
-            line.push_str(&format!("${:02X}{:02X},Y @ ", codes[2], codes[1]));
-
             let base = (codes[2] as u16) << 8 | (codes[1] as u16);
+            line.push_str(&format!("${:04X},Y @ ", base));
+
             let addr = base.wrapping_add(cpu.register_y as u16);
             let val = cpu.mem_read(addr);
 
