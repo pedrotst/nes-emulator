@@ -443,9 +443,9 @@ impl CPU {
     }
 
     fn rti(&mut self) {
-        self.status = self.pop_stack();
+        self.status &= 0b0011_0000;
+        self.status |= self.pop_stack() & 0b1100_1111;
         self.program_counter = self.pop_stack_u16();
-        self.status = (self.status | 0b0010_000) & 0b1110_1111;
     }
 
     fn pha(&mut self) {
@@ -493,7 +493,6 @@ impl CPU {
     fn plp(&mut self) {
         self.status &= 0b0011_0000;
         self.status |= self.pop_stack() & 0b1100_1111;
-        // self.status = (self.status | 0b0010_000) & 0b1110_1111;
     }
 
     fn php(&mut self) {
