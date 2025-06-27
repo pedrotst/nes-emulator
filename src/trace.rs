@@ -82,18 +82,18 @@ pub fn trace(cpu: &mut CPU) -> String {
 
             let base = (codes[2] as u16) << 8 | (codes[1] as u16);
             let addr = base.wrapping_add(cpu.register_x as u16);
-            let val = cpu.mem_read_u16(addr);
+            let val = cpu.mem_read(addr);
 
-            line.push_str(&format!("{:02X} = {:02X} ", addr, val))
+            line.push_str(&format!("{:04X} = {:02X}         ", addr, val))
         }
         AddressingMode::Absolute_Y => {
-            line.push_str(&format!("${:02X}{:02X},Y ", codes[2], codes[1]));
+            line.push_str(&format!("${:02X}{:02X},Y @ ", codes[2], codes[1]));
 
             let base = (codes[2] as u16) << 8 | (codes[1] as u16);
             let addr = base.wrapping_add(cpu.register_y as u16);
-            let val = cpu.mem_read_u16(addr);
+            let val = cpu.mem_read(addr);
 
-            line.push_str(&format!("{:02X} = {:02X} ", addr, val))
+            line.push_str(&format!("{:04X} = {:02X}         ", addr, val))
         }
         AddressingMode::Indirect_X => {
             if code != 0x6C {
@@ -106,9 +106,7 @@ pub fn trace(cpu: &mut CPU) -> String {
                 let pos = (hi as u16) << 8 | (lo as u16);
                 let val = cpu.mem_read_u16(pos);
 
-                line.push_str(&format!("{:02X} = {:04X} = {:02X}    ", 
-                ptr, pos, val))
-
+                line.push_str(&format!("{:02X} = {:04X} = {:02X}    ", ptr, pos, val))
             } else {
                 line.push_str("                            ")
             }
@@ -124,12 +122,25 @@ pub fn trace(cpu: &mut CPU) -> String {
             let val = cpu.mem_read_u16(deref);
 
             line.push_str(&format!(
-                "= {:04X} @ {:04X} = {:02X}     ",
+                "= {:04X} @ {:04X} = {:02X}  ",
                 deref_base, deref, val
             ))
         }
 
-        AddressingMode::Indirect => line.push_str(&format!("$({:02X}) ", codes[1])),
+        AddressingMode::Indirect => { 
+            let addr = ((codes[2] as u16) << 8) | (codes[1] as u16);
+
+                /* Implements the page bug of the jump */
+            let val = if addr & 0x00FF == 0x00FF {
+                    let lo = cpu.mem_read(addr);
+                    let hi = cpu.mem_read(addr & 0xFF00);
+                    (hi as u16) << 8 | (lo as u16)
+                } else {
+                    cpu.mem_read_u16(addr)
+                };
+
+            line.push_str(&format!("(${:04X}) = {:04X}              ", addr,val))
+        }
         AddressingMode::NoneAddressing => {
             if ["ROR A", "ROL A", "LSR A", "ASL A"].contains(&opcode.mneumonic) {
                 line.push_str("                          ");
