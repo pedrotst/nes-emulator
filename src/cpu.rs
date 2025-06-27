@@ -118,10 +118,10 @@ impl CPU {
     }
 
     pub fn push_stack_u16(&mut self, data: u16) {
-        let hi = 0x01;
-        let addr = (hi << 8) | self.stack_pointer as u16;
-        self.mem_write_u16(addr, data);
-        self.stack_pointer -= 2;
+        let hi = (data >> 8) as u8;
+        let lo = (data & 0b1111_1111) as u8;
+        self.push_stack(hi);
+        self.push_stack(lo);
     }
 
     pub fn pop_stack(&mut self) -> u8 {
@@ -140,11 +140,14 @@ impl CPU {
     }
 
     pub fn pop_stack_u16(&mut self) -> u16 {
-        self.stack_pointer += 2;
-        let hi = 0x01;
-        let addr = (hi << 8) | self.stack_pointer as u16;
-        let data = self.mem_read_u16(addr);
-        data
+        // self.stack_pointer += 2;
+        // let hi = 0x01;
+        // let addr = (hi << 8) | self.stack_pointer as u16;
+        // let data = self.mem_read_u16(addr);
+        let lo: u16 = self.pop_stack() as u16;
+        let hi: u16 = self.pop_stack() as u16;
+
+        (hi << 8) | lo
     }
 
     pub fn load_and_run(&mut self, program: Vec<u8>) {

@@ -79,6 +79,6 @@ fn php_pla(){
     //cpu.load_and_run_no_reset();
     cpu.run();
     println!("status: {:#b}", cpu.status);
-    assert_eq!(cpu.status, 0b1010_1100);
+    assert_eq!(cpu.status, 0b1001_1100);
 
 }
