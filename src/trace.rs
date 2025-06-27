@@ -67,11 +67,17 @@ pub fn trace(cpu: &mut CPU) -> String {
             line.push_str(&format!("{:02X} = {:02X} ", pos, val))
         }
         AddressingMode::Absolute => {
-            line.push_str(&format!("${:02X}{:02X} = ", codes[2], codes[1]));
-            let addr = (codes[2] as u16) << 8 | (codes[1] as u16);
-            let val = cpu.mem_read_u16(addr);
-            line.push_str(&format!("{:02X}", val));
-            line.push_str("                       ");
+            line.push_str(&format!("${:02X}{:02X}", codes[2], codes[1]));
+            if code != 0x4C && code != 0x20 {
+                let addr = (codes[2] as u16) << 8 | (codes[1] as u16);
+                let val = cpu.mem_read_u16(addr);
+                line.push_str(&format!(" = {:02X}", val));
+                line.push_str("                       ");
+            }
+            else {
+                line.push_str("                       ");
+            }
+
         }
         AddressingMode::Absolute_X => {
             line.push_str(&format!("${:02X}{:02X},X @ ", codes[2], codes[1]));
@@ -92,16 +98,21 @@ pub fn trace(cpu: &mut CPU) -> String {
             line.push_str(&format!("{:02X} = {:02X} ", addr, val))
         }
         AddressingMode::Indirect_X => {
-            line.push_str(&format!("(${:02X},X) @ ", codes[1]));
+            if code != 0x6C {
+                line.push_str(&format!("(${:02X},X) @ ", codes[1]));
 
-            let base = cpu.mem_read(codes[1] as u16);
-            let ptr = base.wrapping_add(cpu.register_x);
-            let lo = cpu.mem_read(ptr as u16);
-            let hi = cpu.mem_read(ptr.wrapping_add(1) as u16);
-            let pos = (hi as u16) << 8 | (lo as u16);
-            let val = cpu.mem_read_u16(pos);
+                let base = cpu.mem_read(codes[1] as u16);
+                let ptr = base.wrapping_add(cpu.register_x);
+                let lo = cpu.mem_read(ptr as u16);
+                let hi = cpu.mem_read(ptr.wrapping_add(1) as u16);
+                let pos = (hi as u16) << 8 | (lo as u16);
+                let val = cpu.mem_read_u16(pos);
 
-            line.push_str(&format!("{:02X} = {:02X} = {:02X} ", base, pos, val))
+                line.push_str(&format!("{:02X} = {:02X} = {:02X} ", base, pos, val))
+            }
+            else {
+                line.push_str("                            ")
+            }
         }
 
         AddressingMode::Indirect_Y => {

@@ -197,7 +197,7 @@ lazy_static! {
         OpCode::new(0x50, "BVC", 2, 2 /* 3 branch, 4 page crossed */, AddressingMode::Relative),
         OpCode::new(0x70, "BVS", 2, 2 /* 3 branch, 4 page crossed */, AddressingMode::Relative),
 
-        OpCode::new(0x60, "RTS", 1, 6                               , AddressingMode::Relative),
+        OpCode::new(0x60, "RTS", 1, 6                               , AddressingMode::NoneAddressing),
 
         OpCode::new(0x4C, "JMP", 3, 3                               , AddressingMode::Absolute),
         OpCode::new(0x6C, "JMP", 3, 5                               , AddressingMode::Indirect),

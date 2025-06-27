@@ -102,7 +102,7 @@ impl CPU {
         self.register_a = 0;
         self.register_x = 0;
         self.register_y = 0;
-        self.status = 0;
+        self.status = 0b0001_00100;
         self.stack_pointer = STACK_RESET;
 
         self.program_counter = self.mem_read_u16(0xFFFC);
@@ -249,7 +249,7 @@ impl CPU {
     }
 
     fn dey(&mut self) {
-        self.register_y = self.register_x.wrapping_sub(1);
+        self.register_y = self.register_y.wrapping_sub(1);
         self.update_zero_flag(self.register_y);
         self.update_negative_flag(self.register_y);
     }
@@ -368,7 +368,12 @@ impl CPU {
         let data = self.mem_read(addr);
         self.update_zero_flag(self.register_a & data);
 
-        self.status |= data & 0b1100_0000;
+        let mask = data & 0b1100_0000;
+        self.status &= 0b0011_1111;
+        self.status |= mask;
+
+        // 66 = 0100_0010
+        // 26 = 0001_1010
     }
 
     fn compare(&mut self, mode: &AddressingMode, compare_with: u8) {
@@ -483,8 +488,9 @@ impl CPU {
 
     /* TODO: Implement delayed effect of updating the I flag */
     fn plp(&mut self) {
-        self.status = self.pop_stack();
-        self.status = (self.status | 0b0010_000) & 0b1110_1111;
+        self.status &= 0b0011_0000;
+        self.status |= self.pop_stack() & 0b1100_1111;
+        // self.status = (self.status | 0b0010_000) & 0b1110_1111;
     }
 
     fn php(&mut self) {

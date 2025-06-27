@@ -96,3 +96,16 @@ fn test_bit_zero_page2() {
     assert_eq!(cpu.register_a & x, 0x00);
     assert_eq!(cpu.status & 0b1100_0010, 0b1100_0010);
 }
+
+#[test]
+fn test_bit_zero_page3() {
+    let mut cpu = CPU::mock_cpu(vec![0x24, 0x10, 0x00]);
+    cpu.mem_write(0x10, 0x07);
+    cpu.register_a = 0x00;
+    // cpu.load_and_run_no_reset();
+    cpu.run();
+    let x = cpu.mem_read(0x10);
+    assert_eq!(x, 0x07);
+    assert_eq!(cpu.register_a & x, 0x00);
+    assert_eq!(cpu.status & 0b0000_0010, 0b0000_0010);
+}
