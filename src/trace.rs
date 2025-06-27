@@ -99,14 +99,16 @@ pub fn trace(cpu: &mut CPU) -> String {
             if code != 0x6C {
                 line.push_str(&format!("(${:02X},X) @ ", codes[1]));
 
-                let base = cpu.mem_read(codes[1] as u16);
+                let base = codes[1];
                 let ptr = base.wrapping_add(cpu.register_x);
                 let lo = cpu.mem_read(ptr as u16);
                 let hi = cpu.mem_read(ptr.wrapping_add(1) as u16);
                 let pos = (hi as u16) << 8 | (lo as u16);
                 let val = cpu.mem_read_u16(pos);
 
-                line.push_str(&format!("{:02X} = {:02X} = {:02X} ", base, pos, val))
+                line.push_str(&format!("{:02X} = {:04X} = {:02X}    ", 
+                ptr, pos, val))
+
             } else {
                 line.push_str("                            ")
             }
@@ -122,7 +124,7 @@ pub fn trace(cpu: &mut CPU) -> String {
             let val = cpu.mem_read_u16(deref);
 
             line.push_str(&format!(
-                "= {:04X} @ {:04X} = {:02X}  ",
+                "= {:04X} @ {:04X} = {:02X}     ",
                 deref_base, deref, val
             ))
         }
