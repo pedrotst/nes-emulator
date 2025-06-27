@@ -73,11 +73,9 @@ pub fn trace(cpu: &mut CPU) -> String {
                 let val = cpu.mem_read(addr);
                 line.push_str(&format!(" = {:02X}", val));
                 line.push_str("                  ");
-            }
-            else {
+            } else {
                 line.push_str("                       ");
             }
-
         }
         AddressingMode::Absolute_X => {
             line.push_str(&format!("${:02X}{:02X},X @ ", codes[2], codes[1]));
@@ -109,8 +107,7 @@ pub fn trace(cpu: &mut CPU) -> String {
                 let val = cpu.mem_read_u16(pos);
 
                 line.push_str(&format!("{:02X} = {:02X} = {:02X} ", base, pos, val))
-            }
-            else {
+            } else {
                 line.push_str("                            ")
             }
         }
@@ -131,7 +128,13 @@ pub fn trace(cpu: &mut CPU) -> String {
         }
 
         AddressingMode::Indirect => line.push_str(&format!("$({:02X}) ", codes[1])),
-        AddressingMode::NoneAddressing => line.push_str("                            "),
+        AddressingMode::NoneAddressing => {
+            if ["ROR A", "ROL A", "LSR A", "ASL A"].contains(&opcode.mneumonic) {
+                line.push_str("                          ");
+            } else {
+                line.push_str("                            ");
+            }
+        }
     }
 
     line.push_str(&format!(

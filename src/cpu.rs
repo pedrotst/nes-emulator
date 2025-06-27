@@ -701,7 +701,7 @@ impl CPU {
                 }
 
                 /* Logical Operations */
-                "ASL_A" => {
+                "ASL A" => {
                     self.asl_accumulator();
                 }
 
@@ -709,7 +709,7 @@ impl CPU {
                     self.asl(&opcode.mode);
                 }
 
-                "LSR_A" => {
+                "LSR A" => {
                     self.lsr_accumulator();
                 }
 
@@ -717,7 +717,7 @@ impl CPU {
                     self.lsr(&opcode.mode);
                 }
 
-                "ROL_A" => {
+                "ROL A" => {
                     self.rol_accumulator();
                 }
 
@@ -725,7 +725,7 @@ impl CPU {
                     self.rol(&opcode.mode);
                 }
 
-                "ROR_A" => {
+                "ROR A" => {
                     self.ror_accumulator();
                 }
 
