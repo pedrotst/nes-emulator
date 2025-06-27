@@ -70,9 +70,9 @@ pub fn trace(cpu: &mut CPU) -> String {
             line.push_str(&format!("${:02X}{:02X}", codes[2], codes[1]));
             if code != 0x4C && code != 0x20 {
                 let addr = (codes[2] as u16) << 8 | (codes[1] as u16);
-                let val = cpu.mem_read_u16(addr);
+                let val = cpu.mem_read(addr);
                 line.push_str(&format!(" = {:02X}", val));
-                line.push_str("                       ");
+                line.push_str("                  ");
             }
             else {
                 line.push_str("                       ");
