@@ -4,7 +4,7 @@ use crate::opcodes;
 
 use std::collections::HashMap;
 
-#[derive(Debug)]
+#[derive(Default, Debug)]
 #[allow(non_camel_case_types)]
 pub enum AddressingMode {
     Immediate,
@@ -18,6 +18,7 @@ pub enum AddressingMode {
     Indirect_X,
     Indirect_Y,
     Relative,
+    #[default]
     NoneAddressing,
 }
 

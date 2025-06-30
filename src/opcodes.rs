@@ -3,9 +3,10 @@ use std::collections::HashMap;
 
 use lazy_static::lazy_static;
 
-#[derive(Debug)]
+#[derive(Default, Debug)]
 pub struct OpCode {
     pub code : u8,
+    pub unofficial: bool,
     pub mneumonic : &'static str,
     pub len : u8,
     pub cycles: u8,
@@ -16,6 +17,18 @@ impl OpCode {
     fn new(code: u8, mneumonic: &'static str, len: u8, cycles: u8, mode: AddressingMode) -> Self {
         OpCode {
             code : code,
+            unofficial: false,
+            mneumonic : mneumonic,
+            len: len,
+            cycles: cycles,
+            mode: mode,
+        }
+    }
+
+    fn new_unofficial(code: u8, mneumonic: &'static str, len: u8, cycles: u8, mode: AddressingMode) -> Self {
+        OpCode {
+            code : code,
+            unofficial: true,
             mneumonic : mneumonic,
             len: len,
             cycles: cycles,
@@ -26,24 +39,27 @@ impl OpCode {
 
 lazy_static! {
     pub static ref CPU_OPS_CODES: Vec<OpCode> = vec![
-        OpCode::new(0x00, "BRK", 2, 7, AddressingMode::NoneAddressing),
+
+        new!(code = 0x00, mneumonic = "BRK", cycles = 2, len = 7, mode = AddressingMode::NoneAddressing),
 
         // NOPs
         OpCode::new(0xea, "NOP" , 1, 2, AddressingMode::NoneAddressing),
-        OpCode::new(0x1a, "*NOP", 1, 2, AddressingMode::NoneAddressing),
-        OpCode::new(0x3a, "*NOP", 1, 2, AddressingMode::NoneAddressing),
-        OpCode::new(0x5a, "*NOP", 1, 2, AddressingMode::NoneAddressing),
-        OpCode::new(0x7a, "*NOP", 1, 2, AddressingMode::NoneAddressing),
-        OpCode::new(0xda, "*NOP", 1, 2, AddressingMode::NoneAddressing),
-        OpCode::new(0xfa, "*NOP", 1, 2, AddressingMode::NoneAddressing),
+        OpCode::new_unofficial(0x1a, "NOP", 1, 2, AddressingMode::NoneAddressing),
+        OpCode::new_unofficial(0x3a, "NOP", 1, 2, AddressingMode::NoneAddressing),
+        OpCode::new_unofficial(0x5a, "NOP", 1, 2, AddressingMode::NoneAddressing),
+        OpCode::new_unofficial(0x7a, "NOP", 1, 2, AddressingMode::NoneAddressing),
+        OpCode::new_unofficial(0xda, "NOP", 1, 2, AddressingMode::NoneAddressing),
+        OpCode::new_unofficial(0xfa, "NOP", 1, 2, AddressingMode::NoneAddressing),
 
         // IGN
-        OpCode::new(0x04, "*NOP", 2, 3, AddressingMode::ZeroPage),
-        OpCode::new(0x44, "*NOP", 2, 3, AddressingMode::ZeroPage),
-        OpCode::new(0x64, "*NOP", 2, 3, AddressingMode::ZeroPage),
+        OpCode::new_unofficial(0x04, "NOP", 2, 3, AddressingMode::ZeroPage),
+        OpCode::new_unofficial(0x44, "NOP", 2, 3, AddressingMode::ZeroPage),
+        OpCode::new_unofficial(0x64, "NOP", 2, 3, AddressingMode::ZeroPage),
+
+        OpCode::new_unofficial(0x0c, "NOP", 3, 4, AddressingMode::Absolute),
 
 
-        // Register Instructions
+        // Register Instr
         OpCode::new(0xAA, "TAX", 1, 2, AddressingMode::NoneAddressing),
         OpCode::new(0x8A, "TXA", 1, 2, AddressingMode::NoneAddressing),
         OpCode::new(0xCA, "DEX", 1, 2, AddressingMode::NoneAddressing),
@@ -93,26 +109,26 @@ lazy_static! {
         OpCode::new(0x94, "STY", 2, 4, AddressingMode::ZeroPage_X),
         OpCode::new(0x8C, "STY", 3, 4, AddressingMode::Absolute),
 
-        /* Logical Operations */
-        OpCode::new(0x0A,"ASL A", 1, 2, AddressingMode::NoneAddressing),
+        /* Logical Operat ons */
+        OpCode::new(0x0A, "ASL A", 1, 2, AddressingMode::NoneAddressing),
         OpCode::new(0x06, "ASL", 2, 5, AddressingMode::ZeroPage),
         OpCode::new(0x16, "ASL", 2, 6, AddressingMode::ZeroPage_X),
         OpCode::new(0x0E, "ASL", 3, 6, AddressingMode::Absolute),
         OpCode::new(0x1E, "ASL", 3, 7, AddressingMode::Absolute_X),
 
-        OpCode::new(0x4A,"LSR A", 1, 2, AddressingMode::NoneAddressing),
+        OpCode::new(0x4A, "LSR A", 1, 2, AddressingMode::NoneAddressing),
         OpCode::new(0x46, "LSR", 2, 5, AddressingMode::ZeroPage),
         OpCode::new(0x56, "LSR", 2, 6, AddressingMode::ZeroPage_X),
         OpCode::new(0x4E, "LSR", 3, 6, AddressingMode::Absolute),
         OpCode::new(0x5E, "LSR", 3, 7, AddressingMode::Absolute_X),
 
-        OpCode::new(0x2A,"ROL A", 1, 2, AddressingMode::NoneAddressing),
+        OpCode::new(0x2A, "ROL A", 1, 2, AddressingMode::NoneAddressing),
         OpCode::new(0x26, "ROL", 2, 5, AddressingMode::ZeroPage),
         OpCode::new(0x36, "ROL", 2, 6, AddressingMode::ZeroPage_X),
         OpCode::new(0x2E, "ROL", 3, 6, AddressingMode::Absolute),
         OpCode::new(0x3E, "ROL", 3, 7, AddressingMode::Absolute_X),
 
-        OpCode::new(0x6A,"ROR A", 1, 2, AddressingMode::NoneAddressing),
+        OpCode::new(0x6A, "ROR A", 1, 2, AddressingMode::NoneAddressing),
         OpCode::new(0x66, "ROR", 2, 5, AddressingMode::ZeroPage),
         OpCode::new(0x76, "ROR", 2, 6, AddressingMode::ZeroPage_X),
         OpCode::new(0x6E, "ROR", 3, 6, AddressingMode::Absolute),
@@ -150,7 +166,7 @@ lazy_static! {
         OpCode::new(0x24, "BIT", 2, 3,          AddressingMode::ZeroPage),
         OpCode::new(0x2C, "BIT", 3, 4,          AddressingMode::Absolute),
 
-        /* Compare X and Y */
+        /* Compare X and   */
         OpCode::new(0xC9, "CMP", 2, 2,          AddressingMode::Immediate),
         OpCode::new(0xC5, "CMP", 2, 3,          AddressingMode::ZeroPage),
         OpCode::new(0xD5, "CMP", 2, 4,          AddressingMode::ZeroPage_X),
@@ -168,7 +184,7 @@ lazy_static! {
         OpCode::new(0xC4, "CPY", 2, 3,          AddressingMode::ZeroPage),
         OpCode::new(0xCC, "CPY", 3, 4,          AddressingMode::Absolute),
 
-        /* Flags Management */
+        /* Flags Manageme t */
         OpCode::new(0x18, "CLC", 1, 2,          AddressingMode::NoneAddressing),
         OpCode::new(0xD8, "CLD", 1, 2,          AddressingMode::NoneAddressing),
         OpCode::new(0x58, "CLI", 1, 2,          AddressingMode::NoneAddressing),
@@ -217,7 +233,7 @@ lazy_static! {
 
         OpCode::new(0x20, "JSR", 3, 6                               , AddressingMode::Absolute),
 
-        /* Stack Operations */
+        /* Stack Operatio s */
         OpCode::new(0x48, "PHA", 1, 3                               , AddressingMode::NoneAddressing),
         OpCode::new(0x68, "PLA", 1, 4                               , AddressingMode::NoneAddressing),
 

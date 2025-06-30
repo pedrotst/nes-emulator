@@ -33,7 +33,11 @@ pub fn trace(cpu: &mut CPU) -> String {
     // for _i in 1..=3 - codes.len() {
     //     line.push_str(&"   ".to_string());
     // }
-    pad(&mut line, POS_INSTRUCTION_COL);
+    pad(&mut line, POS_INSTRUCTION_COL - if opcode.unofficial {1} else {0});
+
+    if opcode.unofficial {
+        line.push_str(&"*");
+    }
 
     line.push_str(&format!("{} ", opcode.mneumonic));
 
