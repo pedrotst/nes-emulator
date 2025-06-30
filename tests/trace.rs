@@ -12,7 +12,7 @@
 
         assert_eq!(
             trace(&mut cpu),
-            "8000  96 80     STX $80,Y @ 7F = 00 A:47 X:69 Y:FF P:00 SP:FD"
+            "8000  96 80     STX $80,Y @ 7F = 00             A:47 X:69 Y:FF P:00 SP:FD"
         );
     }
 

@@ -40,23 +40,44 @@ impl OpCode {
 lazy_static! {
     pub static ref CPU_OPS_CODES: Vec<OpCode> = vec![
 
-        new!(code = 0x00, mneumonic = "BRK", cycles = 2, len = 7, mode = AddressingMode::NoneAddressing),
+        OpCode::new(0x00, "BRK", 2, 7, AddressingMode::NoneAddressing),
 
         // NOPs
         OpCode::new(0xea, "NOP" , 1, 2, AddressingMode::NoneAddressing),
-        OpCode::new_unofficial(0x1a, "NOP", 1, 2, AddressingMode::NoneAddressing),
-        OpCode::new_unofficial(0x3a, "NOP", 1, 2, AddressingMode::NoneAddressing),
-        OpCode::new_unofficial(0x5a, "NOP", 1, 2, AddressingMode::NoneAddressing),
-        OpCode::new_unofficial(0x7a, "NOP", 1, 2, AddressingMode::NoneAddressing),
-        OpCode::new_unofficial(0xda, "NOP", 1, 2, AddressingMode::NoneAddressing),
-        OpCode::new_unofficial(0xfa, "NOP", 1, 2, AddressingMode::NoneAddressing),
+        OpCode::new_unofficial(0x1A, "NOP", 1, 2, AddressingMode::NoneAddressing),
+        OpCode::new_unofficial(0x3A, "NOP", 1, 2, AddressingMode::NoneAddressing),
+        OpCode::new_unofficial(0x5A, "NOP", 1, 2, AddressingMode::NoneAddressing),
+        OpCode::new_unofficial(0x7A, "NOP", 1, 2, AddressingMode::NoneAddressing),
+        OpCode::new_unofficial(0xDA, "NOP", 1, 2, AddressingMode::NoneAddressing),
+        OpCode::new_unofficial(0xFA, "NOP", 1, 2, AddressingMode::NoneAddressing),
 
         // IGN
         OpCode::new_unofficial(0x04, "NOP", 2, 3, AddressingMode::ZeroPage),
         OpCode::new_unofficial(0x44, "NOP", 2, 3, AddressingMode::ZeroPage),
         OpCode::new_unofficial(0x64, "NOP", 2, 3, AddressingMode::ZeroPage),
 
-        OpCode::new_unofficial(0x0c, "NOP", 3, 4, AddressingMode::Absolute),
+        OpCode::new_unofficial(0x0C, "NOP", 3, 4, AddressingMode::Absolute),
+
+        OpCode::new_unofficial(0x1C, "NOP", 3, 4, AddressingMode::Absolute_X),
+        OpCode::new_unofficial(0x3C, "NOP", 3, 4, AddressingMode::Absolute_X),
+        OpCode::new_unofficial(0x5C, "NOP", 3, 4, AddressingMode::Absolute_X),
+        OpCode::new_unofficial(0x7C, "NOP", 3, 4, AddressingMode::Absolute_X),
+        OpCode::new_unofficial(0xDC, "NOP", 3, 4, AddressingMode::Absolute_X),
+        OpCode::new_unofficial(0xFC, "NOP", 3, 4, AddressingMode::Absolute_X),
+
+        OpCode::new_unofficial(0x14, "NOP", 2, 5, AddressingMode::ZeroPage_X),
+        OpCode::new_unofficial(0x34, "NOP", 2, 5, AddressingMode::ZeroPage_X),
+        OpCode::new_unofficial(0x54, "NOP", 2, 5, AddressingMode::ZeroPage_X),
+        OpCode::new_unofficial(0x74, "NOP", 2, 5, AddressingMode::ZeroPage_X),
+        OpCode::new_unofficial(0xD4, "NOP", 2, 5, AddressingMode::ZeroPage_X),
+        OpCode::new_unofficial(0xF4, "NOP", 2, 5, AddressingMode::ZeroPage_X),
+
+        // SKB
+        OpCode::new_unofficial(0x80, "NOP", 2, 3, AddressingMode::Immediate),
+        OpCode::new_unofficial(0x82, "NOP", 2, 3, AddressingMode::Immediate),
+        OpCode::new_unofficial(0x89, "NOP", 2, 3, AddressingMode::Immediate),
+        OpCode::new_unofficial(0xC2, "NOP", 2, 3, AddressingMode::Immediate),
+        OpCode::new_unofficial(0xE2, "NOP", 2, 3, AddressingMode::Immediate),
 
 
         // Register Instr
