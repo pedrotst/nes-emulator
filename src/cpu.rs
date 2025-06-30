@@ -871,6 +871,12 @@ impl CPU {
 
                 "NOP" => {}
 
+                "*NOP" => {
+                    // self.nop(&opcode.mode);
+                }
+
+                "NOP" => {}
+
                 /* Break */
                 "BRK" => {
                     // self.brk();

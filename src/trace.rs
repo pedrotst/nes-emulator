@@ -3,6 +3,13 @@ use std::collections::HashMap;
 use crate::cpu::{AddressingMode, CPU, Mem};
 use crate::opcodes;
 
+const POS_INSTRUCTION_COL : usize = 16;
+const POS_REGISTER_COL : usize = 48;
+
+fn pad(line: &mut String, padding: usize) {
+    line.push_str(&" ".repeat(padding - line.len()));
+}
+
 pub fn trace(cpu: &mut CPU) -> String {
     let ref opcodes: HashMap<u8, &'static opcodes::OpCode> = *opcodes::OPCODES_MAP;
     let code = cpu.mem_read(cpu.program_counter);
@@ -23,24 +30,22 @@ pub fn trace(cpu: &mut CPU) -> String {
     }
 
     // Pad when there are less than 2 arguments for opcode
-    for _i in 1..=3 - codes.len() {
-        line.push_str(&"   ".to_string());
-    }
-    line.push_str(&" ".to_string());
+    // for _i in 1..=3 - codes.len() {
+    //     line.push_str(&"   ".to_string());
+    // }
+    pad(&mut line, POS_INSTRUCTION_COL);
 
     line.push_str(&format!("{} ", opcode.mneumonic));
 
     match opcode.mode {
         AddressingMode::Immediate => {
             line.push_str(&format!("#${:02X} ", codes[1]));
-            line.push_str("                       ");
         }
         AddressingMode::ZeroPage => {
             line.push_str(&format!("${:02X} ", codes[1]));
 
             let val = cpu.mem_read(codes[1] as u16);
             line.push_str(&format!("= {:02X} ", val));
-            line.push_str("                   ")
         }
         AddressingMode::Relative => {
             let val = cpu
@@ -48,7 +53,6 @@ pub fn trace(cpu: &mut CPU) -> String {
                 .wrapping_add(2) // +2 because the PC is one off
                 .wrapping_add_signed(codes[1] as i8 as i16);
             line.push_str(&format!("${:02X} ", val));
-            line.push_str("                      ")
         }
         AddressingMode::ZeroPage_X => {
             line.push_str(&format!("${:02X},X @ ", codes[1]));
@@ -56,7 +60,7 @@ pub fn trace(cpu: &mut CPU) -> String {
             let pos = codes[1].wrapping_add(cpu.register_x);
             let val = cpu.mem_read(pos as u16);
 
-            line.push_str(&format!("{:02X} = {:02X}             ", pos, val))
+            line.push_str(&format!("{:02X} = {:02X}", pos, val))
         }
         AddressingMode::ZeroPage_Y => {
             line.push_str(&format!("${:02X},Y @ ", codes[1]));
@@ -64,7 +68,7 @@ pub fn trace(cpu: &mut CPU) -> String {
             let pos = codes[1].wrapping_add(cpu.register_y);
             let val = cpu.mem_read(pos as u16);
 
-            line.push_str(&format!("{:02X} = {:02X}             ", pos, val))
+            line.push_str(&format!("{:02X} = {:02X}", pos, val))
         }
         AddressingMode::Absolute => {
             line.push_str(&format!("${:02X}{:02X}", codes[2], codes[1]));
@@ -72,9 +76,6 @@ pub fn trace(cpu: &mut CPU) -> String {
                 let addr = (codes[2] as u16) << 8 | (codes[1] as u16);
                 let val = cpu.mem_read(addr);
                 line.push_str(&format!(" = {:02X}", val));
-                line.push_str("                  ");
-            } else {
-                line.push_str("                       ");
             }
         }
         AddressingMode::Absolute_X => {
@@ -83,7 +84,7 @@ pub fn trace(cpu: &mut CPU) -> String {
             let addr = base.wrapping_add(cpu.register_x as u16);
             let val = cpu.mem_read(addr);
 
-            line.push_str(&format!("{:04X} = {:02X}         ", addr, val))
+            line.push_str(&format!("{:04X} = {:02X}", addr, val))
         }
         AddressingMode::Absolute_Y => {
             let base = (codes[2] as u16) << 8 | (codes[1] as u16);
@@ -92,7 +93,7 @@ pub fn trace(cpu: &mut CPU) -> String {
             let addr = base.wrapping_add(cpu.register_y as u16);
             let val = cpu.mem_read(addr);
 
-            line.push_str(&format!("{:04X} = {:02X}         ", addr, val))
+            line.push_str(&format!("{:04X} = {:02X}", addr, val))
         }
         AddressingMode::Indirect_X => {
             if code != 0x6C {
@@ -106,9 +107,7 @@ pub fn trace(cpu: &mut CPU) -> String {
                 let val = cpu.mem_read_u16(pos);
 
                 line.push_str(&format!("{:02X} = {:04X} = {:02X}    ", ptr, pos, val))
-            } else {
-                line.push_str("                            ")
-            }
+            } 
         }
 
         AddressingMode::Indirect_Y => {
@@ -121,7 +120,7 @@ pub fn trace(cpu: &mut CPU) -> String {
             let val = cpu.mem_read_u16(deref);
 
             line.push_str(&format!(
-                "= {:04X} @ {:04X} = {:02X}  ",
+                "= {:04X} @ {:04X} = {:02X}",
                 deref_base, deref, val
             ))
         }
@@ -138,16 +137,12 @@ pub fn trace(cpu: &mut CPU) -> String {
                     cpu.mem_read_u16(addr)
                 };
 
-            line.push_str(&format!("(${:04X}) = {:04X}              ", addr,val))
+            line.push_str(&format!("(${:04X}) = {:04X}", addr,val))
         }
         AddressingMode::NoneAddressing => {
-            if ["ROR A", "ROL A", "LSR A", "ASL A"].contains(&opcode.mneumonic) {
-                line.push_str("                          ");
-            } else {
-                line.push_str("                            ");
-            }
         }
     }
+    pad(&mut line, POS_REGISTER_COL);
 
     line.push_str(&format!(
         "A:{:02X} X:{:02X} Y:{:02X} P:{:02X} SP:{:02X}",
