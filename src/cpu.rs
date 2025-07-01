@@ -172,6 +172,16 @@ impl CPU {
         self.update_negative_flag(self.register_a);
     }
 
+    fn lax(&mut self, mode: &AddressingMode) {
+        let addr = self.get_operand_address(mode);
+        let value = self.mem_read(addr);
+
+        self.register_a = value;
+        self.register_x = self.register_a;
+        self.update_zero_flag(self.register_a);
+        self.update_negative_flag(self.register_a);
+    }
+
     fn ldx(&mut self, mode: &AddressingMode) {
         let addr = self.get_operand_address(mode);
         let value = self.mem_read(addr);
@@ -200,6 +210,13 @@ impl CPU {
         let addr = self.get_operand_address(mode);
 
         self.mem_write(addr, self.register_x);
+    }
+
+    fn sax(&mut self, mode: &AddressingMode) {
+        let addr = self.get_operand_address(mode);
+        let data = self.register_a & self.register_x;
+
+        self.mem_write(addr, data);
     }
 
     fn sty(&mut self, mode: &AddressingMode) {
@@ -490,6 +507,26 @@ impl CPU {
         self.update_zero_flag(x);
     }
 
+    fn dcp(&mut self, mode: &AddressingMode) {
+        let addr = self.get_operand_address(mode);
+        let value = self.mem_read(addr);
+        let (data, _carry) = value.overflowing_sub(1);
+        self.mem_write(addr, data);
+
+        let result = self.register_a.wrapping_sub(data);
+
+
+        if self.register_a >= data {
+            byte_utils::set_carry(&mut self.status);
+        } else {
+            byte_utils::unset_carry(&mut self.status);
+        }
+        
+        // self.update_carry(carry);
+        self.update_negative_flag(result);
+        self.update_zero_flag(result);
+    }
+
     /* TODO: Implement delayed effect of updating the I flag */
     fn plp(&mut self) {
         self.status &= 0b0011_0000;
@@ -651,6 +688,10 @@ impl CPU {
                 "LDA" => {
                     self.lda(&opcode.mode);
                 }
+                "LAX" => {
+                    self.lax(&opcode.mode);
+                }
+
                 "LDX" => {
                     self.ldx(&opcode.mode);
                 }
@@ -664,6 +705,10 @@ impl CPU {
 
                 "STX" => {
                     self.stx(&opcode.mode);
+                }
+
+                "SAX" => {
+                    self.sax(&opcode.mode);
                 }
 
                 "STY" => {
@@ -868,6 +913,10 @@ impl CPU {
                 }
                 "DEC" => {
                     self.dec(&opcode.mode);
+                }
+
+                "DCP" => {
+                    self.dcp(&opcode.mode);
                 }
 
                 "NOP" => {}
