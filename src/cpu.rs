@@ -397,6 +397,21 @@ impl CPU {
         // 26 = 0001_1010
     }
 
+    fn slo(&mut self, mode: &AddressingMode){
+        self.asl(mode);
+        self.or(mode);
+        // let addr = self.get_operand_address(mode);
+        // let data = self.mem_read(addr);
+        // let carry = data & 0b1000_0000;
+        // let result = (data << 1) | self.register_a;
+        // // self.mem_write(addr, result);
+        // self.register_a = result;
+
+        // self.update_zero_flag(result);
+        // self.update_negative_flag(result);
+        // self.update_carry(carry != 0);
+    }
+
     fn compare(&mut self, mode: &AddressingMode, compare_with: u8) {
         let addr = self.get_operand_address(mode);
         let data = self.mem_read(addr);
@@ -799,6 +814,10 @@ impl CPU {
 
                 "BIT" => {
                     self.bit(&opcode.mode);
+                }
+
+                "SLO" => {
+                    self.slo(&opcode.mode);
                 }
 
                 /* Compare X and Y */

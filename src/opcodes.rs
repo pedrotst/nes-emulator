@@ -206,6 +206,14 @@ lazy_static! {
         OpCode::new(0x24, "BIT", 2, 3,          AddressingMode::ZeroPage),
         OpCode::new(0x2C, "BIT", 3, 4,          AddressingMode::Absolute),
 
+        OpCode::new_unofficial(0x07, "SLO", 2, 5,          AddressingMode::ZeroPage),
+        OpCode::new_unofficial(0x17, "SLO", 2, 6,          AddressingMode::ZeroPage_X),
+        OpCode::new_unofficial(0x0F, "SLO", 3, 6,          AddressingMode::Absolute),
+        OpCode::new_unofficial(0x1F, "SLO", 3, 7,          AddressingMode::Absolute_X),
+        OpCode::new_unofficial(0x1B, "SLO", 3, 7,          AddressingMode::Absolute_Y),
+        OpCode::new_unofficial(0x03, "SLO", 2, 8,          AddressingMode::Indirect_X),
+        OpCode::new_unofficial(0x13, "SLO", 2, 8,          AddressingMode::Indirect_Y),
+
         /* Compare X and   */
         OpCode::new(0xC9, "CMP", 2, 2,          AddressingMode::Immediate),
         OpCode::new(0xC5, "CMP", 2, 3,          AddressingMode::ZeroPage),
