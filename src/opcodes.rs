@@ -307,6 +307,14 @@ lazy_static! {
         OpCode::new_unofficial(0xC3, "DCP", 2, 8                               , AddressingMode::Indirect_X),
         OpCode::new_unofficial(0xD3, "DCP", 2, 8                               , AddressingMode::Indirect_Y),
 
+        OpCode::new_unofficial(0xE7, "ISB", 2, 5                               , AddressingMode::ZeroPage),
+        OpCode::new_unofficial(0xF7, "ISB", 2, 6                               , AddressingMode::ZeroPage_X),
+        OpCode::new_unofficial(0xEF, "ISB", 3, 6                               , AddressingMode::Absolute),
+        OpCode::new_unofficial(0xFF, "ISB", 3, 7                               , AddressingMode::Absolute_X),
+        OpCode::new_unofficial(0xFB, "ISB", 3, 7                               , AddressingMode::Absolute_Y),
+        OpCode::new_unofficial(0xE3, "ISB", 2, 8                               , AddressingMode::Indirect_X),
+        OpCode::new_unofficial(0xF3, "ISB", 2, 8                               , AddressingMode::Indirect_Y),
+
 
     ];
 

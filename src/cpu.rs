@@ -507,6 +507,11 @@ impl CPU {
         self.update_zero_flag(x);
     }
 
+    fn isb(&mut self, mode: &AddressingMode) {
+        self.inc(&mode);
+        self.adc_sbc(&mode, true);
+    }
+
     fn dcp(&mut self, mode: &AddressingMode) {
         let addr = self.get_operand_address(mode);
         let value = self.mem_read(addr);
@@ -917,6 +922,10 @@ impl CPU {
 
                 "DCP" => {
                     self.dcp(&opcode.mode);
+                }
+
+                "ISB" => {
+                    self.isb(&opcode.mode);
                 }
 
                 "NOP" => {}
