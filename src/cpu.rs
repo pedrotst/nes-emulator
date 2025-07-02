@@ -404,6 +404,16 @@ impl CPU {
         self.and(mode);
     }
 
+    fn sre(&mut self, mode: &AddressingMode){
+        self.lsr(mode);
+        self.eor(mode);
+    }
+
+    fn rra(&mut self, mode: &AddressingMode){
+        self.ror(mode);
+        self.adc_sbc(mode, false);
+    }
+
     fn compare(&mut self, mode: &AddressingMode, compare_with: u8) {
         let addr = self.get_operand_address(mode);
         let data = self.mem_read(addr);
@@ -815,6 +825,14 @@ impl CPU {
 
                 "RLA" => {
                     self.rla(&opcode.mode);
+                }
+
+                "SRE" => {
+                    self.sre(&opcode.mode);
+                }
+
+                "RRA" => {
+                    self.rra(&opcode.mode);
                 }
 
                 /* Compare X and Y */
