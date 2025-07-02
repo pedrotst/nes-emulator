@@ -392,24 +392,16 @@ impl CPU {
         let mask = data & 0b1100_0000;
         self.status &= 0b0011_1111;
         self.status |= mask;
-
-        // 66 = 0100_0010
-        // 26 = 0001_1010
     }
 
     fn slo(&mut self, mode: &AddressingMode){
         self.asl(mode);
         self.or(mode);
-        // let addr = self.get_operand_address(mode);
-        // let data = self.mem_read(addr);
-        // let carry = data & 0b1000_0000;
-        // let result = (data << 1) | self.register_a;
-        // // self.mem_write(addr, result);
-        // self.register_a = result;
+    }
 
-        // self.update_zero_flag(result);
-        // self.update_negative_flag(result);
-        // self.update_carry(carry != 0);
+    fn rla(&mut self, mode: &AddressingMode){
+        self.rol(mode);
+        self.and(mode);
     }
 
     fn compare(&mut self, mode: &AddressingMode, compare_with: u8) {
@@ -818,6 +810,11 @@ impl CPU {
 
                 "SLO" => {
                     self.slo(&opcode.mode);
+                }
+
+
+                "RLA" => {
+                    self.rla(&opcode.mode);
                 }
 
                 /* Compare X and Y */
