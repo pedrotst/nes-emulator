@@ -73,7 +73,7 @@ impl NesPPU {
         data
     }
 
-    pub fn write_oam_data(&mut self, value: u8) {
+    pub fn write_to_oam_data(&mut self, value: u8) {
         self.oam_data[self.oam_addr as usize] = value;
         self.oam_addr = self.oam_addr.wrapping_add(1);
     }
@@ -122,7 +122,7 @@ impl NesPPU {
             _ => panic!("unexpected access to mirrored space {}", addr),
         }
     }
-    pub fn write_ppu_data(&mut self, data: u8) {
+    pub fn write_to_ppu_data(&mut self, data: u8) {
         let addr = self.addr.get();
         self.increment_vram_addr();
 

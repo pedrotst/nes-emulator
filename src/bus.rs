@@ -118,13 +118,13 @@ impl Mem for Bus {
                 self.ppu.write_to_oam_addr(data);
             }
             0x2004 => {
-                self.ppu.write_oam_data(data);
+                self.ppu.write_to_oam_data(data);
             }
             0x2006 => {
                 self.ppu.write_to_ppu_addr(data);
             }
             0x2007 => {
-                self.ppu.write_ppu_data(data);
+                self.ppu.write_to_ppu_data(data);
             }
 
             0x2008 ..= PPU_REGISTERS_MIRRORS_END => {
