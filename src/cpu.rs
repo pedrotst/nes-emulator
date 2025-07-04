@@ -762,6 +762,19 @@ impl CPU {
         self.run_with_callback(|_| {});
     }
 
+    fn interrupt_nmi(&mut self) {
+        self.push_stack_u16(self.program_counter);
+        let mut flag = self.status;
+
+        byte_utils::set_interrupt(&mut flag);
+        self.push_stack(flag);
+        byte_utils::set_interrupt_disable(&mut self.status);
+
+        self.bus.tick(2);
+        self.program_counter = self.mem_read_u16(0xfffa)
+
+    }
+
     pub fn run_with_callback<F>(&mut self, mut callback: F)
     where
         F: FnMut(&mut CPU),
@@ -769,6 +782,9 @@ impl CPU {
         let ref opcodes: HashMap<u8, &'static opcodes::OpCode> = *opcodes::OPCODES_MAP;
 
         loop {
+            if let Some(_nmi) = self.bus.poll_nmi_status() {
+                self.interrupt_nmi();
+            }
             callback(self);
             let code = self.mem_read(self.program_counter);
             self.program_counter += 1;

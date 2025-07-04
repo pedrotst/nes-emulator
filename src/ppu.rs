@@ -19,6 +19,7 @@ pub struct NesPPU {
 
     scanline: u16,
     cycles: usize,
+    pub nmi_interrupt: Option<u8>,
 
     // pub
     pub mirroring: Mirroring,
@@ -41,6 +42,7 @@ impl NesPPU {
 
             scanline: 0,
             cycles: 0,
+            nmi_interrupt: None,
 
             internal_data_buf: 0,
             palette_table: [0; 32],
@@ -62,6 +64,7 @@ impl NesPPU {
 
         if self.scanline >= 252 {
             self.scanline = 0;
+            self.nmi_interrupt = None;
             self.status.reset_vblank_status();
             return true;
         }
@@ -75,7 +78,15 @@ impl NesPPU {
     }
 
     pub fn write_to_ctrl(&mut self, value: u8) {
+        let before_nmi_status = self.ctrl.generate_vblank_nmi();
         self.ctrl.update(value);
+        if !before_nmi_status && self.ctrl.generate_vblank_nmi() && self.status.is_in_vblank() {
+            self.nmi_interrupt = Some(1);
+        }
+    }
+
+    pub fn nmi_status(self) -> Option<u8> {
+        self.nmi_interrupt
     }
 
     pub fn write_to_mask(&mut self, value: u8) {
@@ -303,13 +314,7 @@ impl PPUCTRL {
         }
     }
     pub fn generate_vblank_nmi(&mut self) -> bool {
-        if self.contains(PPUCTRL::GENERATE_NMI) {
-            false
-        }
-        else {
-            self.insert(PPUCTRL::GENERATE_NMI);
-            true
-        }
+        self.contains(PPUCTRL::GENERATE_NMI)
     }
 
     pub fn update(&mut self, data: u8) {
@@ -387,6 +392,10 @@ impl PPUSTATUS {
     // until first pre-render scanline
     pub fn update(&mut self, data: u8) {
         self.bits = data;
+    }
+
+    pub fn is_in_vblank(self) -> bool {
+        self.contains(PPUSTATUS::VBLANK)
     }
 
     pub fn reset_vblank_status(&mut self) {
