@@ -979,6 +979,8 @@ impl CPU {
                 _ => todo!(),
             }
 
+            self.bus.tick(opcode.cycles);
+
             if program_counter_state == self.program_counter {
                 self.program_counter += (opcode.len - 1) as u16;
             }

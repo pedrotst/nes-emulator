@@ -17,6 +17,9 @@ pub struct NesPPU {
     pub scroll: PPUSCROLL, // 0x2005
     pub addr: PPUADDR,     // 0x2006
 
+    scanline: u16,
+    cycles: usize,
+
     // pub
     pub mirroring: Mirroring,
 }
@@ -35,9 +38,36 @@ impl NesPPU {
             // oam_data: 0,
             scroll: PPUSCROLL::new(),
             addr: PPUADDR::new(),
+
+            scanline: 0,
+            cycles: 0,
+
             internal_data_buf: 0,
             palette_table: [0; 32],
         }
+    }
+
+    pub fn tick(&mut self, cycles: u8) -> bool {
+        self.cycles += cycles as usize;
+        if self.cycles >= 341 {
+            self.cycles = self.cycles - 341;
+            self.scanline += 1;
+            if self.scanline == 241 {
+                if self.ctrl.generate_vblank_nmi() {
+                    self.status.set_vblank_status(true);
+                    todo!("Should trigger NMI interrupt")
+                }
+            }
+        }
+
+        if self.scanline >= 252 {
+            self.scanline = 0;
+            self.status.reset_vblank_status();
+            return true;
+        }
+
+        return false;
+
     }
 
     pub fn write_to_ppu_addr(&mut self, value: u8) {
@@ -272,6 +302,15 @@ impl PPUCTRL {
             32
         }
     }
+    pub fn generate_vblank_nmi(&mut self) -> bool {
+        if self.contains(PPUCTRL::GENERATE_NMI) {
+            false
+        }
+        else {
+            self.insert(PPUCTRL::GENERATE_NMI);
+            true
+        }
+    }
 
     pub fn update(&mut self, data: u8) {
         self.bits = data;
@@ -352,5 +391,14 @@ impl PPUSTATUS {
 
     pub fn reset_vblank_status(&mut self) {
         self.remove(PPUSTATUS::VBLANK);
+    }
+
+    pub fn set_vblank_status(&mut self, status: bool) {
+        if status {
+            self.insert(PPUSTATUS::VBLANK);
+        }
+        else {
+            self.remove(PPUSTATUS::VBLANK);
+        }
     }
 }
