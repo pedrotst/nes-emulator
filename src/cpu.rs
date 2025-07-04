@@ -703,13 +703,12 @@ impl CPU {
         self.push_stack(self.status | 0b0011_0000);
     }
 
-    /*
     fn brk(&mut self) {
         self.push_stack_u16(self.program_counter + 2);
         self.push_stack(self.status | 0b0011_0000);
+        byte_utils::set_interrupt_disable(&mut self.status);
         self.program_counter = 0xFFFE;
     }
-    */
 
     fn update_carry(&mut self, cond: bool) {
         if cond {
@@ -1056,12 +1055,10 @@ impl CPU {
                     // self.nop(&opcode.mode);
                 }
 
-                "NOP" => {}
-
                 /* Break */
                 "BRK" => {
-                    // self.brk();
-                    return;
+                    self.brk();
+                    // return;
                 }
 
                 _ => todo!(),

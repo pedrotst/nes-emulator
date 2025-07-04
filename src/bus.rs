@@ -72,7 +72,7 @@ impl Bus {
     }
 
     pub fn poll_nmi_status(&mut self) -> Option<u8> {
-        self.ppu.nmi_interrupt.take()
+        self.ppu.nmi_interrupt
     }
 
     fn read_prg_rom(&mut self, mut addr: u16) -> u8 {
