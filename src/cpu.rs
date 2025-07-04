@@ -186,6 +186,7 @@ impl CPU {
         self.stack_pointer = STACK_RESET;
 
         self.program_counter = self.mem_read_u16(0xFFFC);
+        self.bus.tick(7);
     }
 
     pub fn load(&mut self, program: Vec<u8>) {
@@ -590,9 +591,9 @@ impl CPU {
                 .wrapping_add(1)
                 .wrapping_add_signed(offset as i8 as i16);
             self.bus.tick(1);
-        }
-        if page_cross(prev_pc, self.program_counter) {
-            self.bus.tick(1);
+            if page_cross(prev_pc.wrapping_add(1), self.program_counter) {
+                self.bus.tick(1);
+            }
         }
     }
 
@@ -1049,10 +1050,14 @@ impl CPU {
                     self.isb(&opcode.mode);
                 }
 
-                "NOP" => {}
+                "NOP" => {
+                    if opcode.len == 3 {
+                        let (_, page_cross) = self.get_operand_address(&opcode.mode);
+                        if page_cross {
+                            self.bus.tick(1);
+                        }
+                    }
 
-                "*NOP" => {
-                    // self.nop(&opcode.mode);
                 }
 
                 /* Break */

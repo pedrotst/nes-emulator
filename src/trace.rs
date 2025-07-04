@@ -149,8 +149,8 @@ pub fn trace(cpu: &mut CPU) -> String {
     pad(&mut line, POS_REGISTER_COL);
 
     line.push_str(&format!(
-        "A:{:02X} X:{:02X} Y:{:02X} P:{:02X} SP:{:02X}",
-        cpu.register_a, cpu.register_x, cpu.register_y, cpu.status, cpu.stack_pointer
+        "A:{:02X} X:{:02X} Y:{:02X} P:{:02X} SP:{:02X} CYC:{}",
+        cpu.register_a, cpu.register_x, cpu.register_y, cpu.status, cpu.stack_pointer, cpu.bus.cycles
     ));
 
     line

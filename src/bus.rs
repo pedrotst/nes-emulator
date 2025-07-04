@@ -41,7 +41,7 @@ pub struct Bus {
     prg_rom: Vec<u8>,
     ppu: NesPPU,
 
-    cycles: usize,
+    pub cycles: usize,
 }
 
 impl Bus {
@@ -83,6 +83,7 @@ impl Bus {
         }
         self.prg_rom[addr as usize]
     }
+
 }
 
 impl Mem for Bus {

@@ -71,19 +71,19 @@ lazy_static! {
         OpCode::new_unofficial(0xDC, "NOP", 3, 4, AddressingMode::Absolute_X),
         OpCode::new_unofficial(0xFC, "NOP", 3, 4, AddressingMode::Absolute_X),
 
-        OpCode::new_unofficial(0x14, "NOP", 2, 5, AddressingMode::ZeroPage_X),
-        OpCode::new_unofficial(0x34, "NOP", 2, 5, AddressingMode::ZeroPage_X),
-        OpCode::new_unofficial(0x54, "NOP", 2, 5, AddressingMode::ZeroPage_X),
-        OpCode::new_unofficial(0x74, "NOP", 2, 5, AddressingMode::ZeroPage_X),
-        OpCode::new_unofficial(0xD4, "NOP", 2, 5, AddressingMode::ZeroPage_X),
-        OpCode::new_unofficial(0xF4, "NOP", 2, 5, AddressingMode::ZeroPage_X),
+        OpCode::new_unofficial(0x14, "NOP", 2, 4, AddressingMode::ZeroPage_X),
+        OpCode::new_unofficial(0x34, "NOP", 2, 4, AddressingMode::ZeroPage_X),
+        OpCode::new_unofficial(0x54, "NOP", 2, 4, AddressingMode::ZeroPage_X),
+        OpCode::new_unofficial(0x74, "NOP", 2, 4, AddressingMode::ZeroPage_X),
+        OpCode::new_unofficial(0xD4, "NOP", 2, 4, AddressingMode::ZeroPage_X),
+        OpCode::new_unofficial(0xF4, "NOP", 2, 4, AddressingMode::ZeroPage_X),
 
         // SKB
-        OpCode::new_unofficial(0x80, "NOP", 2, 3, AddressingMode::Immediate),
-        OpCode::new_unofficial(0x82, "NOP", 2, 3, AddressingMode::Immediate),
-        OpCode::new_unofficial(0x89, "NOP", 2, 3, AddressingMode::Immediate),
-        OpCode::new_unofficial(0xC2, "NOP", 2, 3, AddressingMode::Immediate),
-        OpCode::new_unofficial(0xE2, "NOP", 2, 3, AddressingMode::Immediate),
+        OpCode::new_unofficial(0x80, "NOP", 2, 2, AddressingMode::Immediate),
+        OpCode::new_unofficial(0x82, "NOP", 2, 2, AddressingMode::Immediate),
+        OpCode::new_unofficial(0x89, "NOP", 2, 2, AddressingMode::Immediate),
+        OpCode::new_unofficial(0xC2, "NOP", 2, 2, AddressingMode::Immediate),
+        OpCode::new_unofficial(0xE2, "NOP", 2, 2, AddressingMode::Immediate),
 
 
         // Register Instr
@@ -331,13 +331,13 @@ lazy_static! {
         OpCode::new(0xCE, "DEC", 3, 6                               , AddressingMode::Absolute),
         OpCode::new(0xDE, "DEC", 3, 7                               , AddressingMode::Absolute_X),
 
-        OpCode::new_unofficial(0xC7, "DCP", 2, 5                               , AddressingMode::ZeroPage),
-        OpCode::new_unofficial(0xD7, "DCP", 2, 6                               , AddressingMode::ZeroPage_X),
-        OpCode::new_unofficial(0xCF, "DCP", 3, 6                               , AddressingMode::Absolute),
-        OpCode::new_unofficial(0xDF, "DCP", 3, 7                               , AddressingMode::Absolute_X),
-        OpCode::new_unofficial(0xDB, "DCP", 3, 7                               , AddressingMode::Absolute_Y),
         OpCode::new_unofficial(0xC3, "DCP", 2, 8                               , AddressingMode::Indirect_X),
+        OpCode::new_unofficial(0xC7, "DCP", 2, 5                               , AddressingMode::ZeroPage),
+        OpCode::new_unofficial(0xCF, "DCP", 3, 6                               , AddressingMode::Absolute),
         OpCode::new_unofficial(0xD3, "DCP", 2, 8                               , AddressingMode::Indirect_Y),
+        OpCode::new_unofficial(0xD7, "DCP", 2, 6                               , AddressingMode::ZeroPage_X),
+        OpCode::new_unofficial(0xDB, "DCP", 3, 7                               , AddressingMode::Absolute_Y),
+        OpCode::new_unofficial(0xDF, "DCP", 3, 7                               , AddressingMode::Absolute_X),
 
         OpCode::new_unofficial(0xE7, "ISB", 2, 5                               , AddressingMode::ZeroPage),
         OpCode::new_unofficial(0xF7, "ISB", 2, 6                               , AddressingMode::ZeroPage_X),
