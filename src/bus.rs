@@ -77,6 +77,7 @@ impl Bus {
 
     fn read_prg_rom(&mut self, mut addr: u16) -> u8 {
         addr -= 0x8000;
+        dbg!(addr);
         if self.prg_rom.len() == 0x4000 && addr >= 0x4000 {
             // Mirror if needed
             addr = addr % 0x4000;

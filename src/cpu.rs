@@ -1062,8 +1062,8 @@ impl CPU {
 
                 /* Break */
                 "BRK" => {
-                    self.brk();
-                    // return;
+                    // self.brk();
+                    return;
                 }
 
                 _ => todo!(),
