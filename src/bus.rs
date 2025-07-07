@@ -1,3 +1,4 @@
+use crate::cartridge::Mirroring;
 use crate::cpu::Mem;
 use crate::cartridge::Rom;
 use crate::cartridge::mock_rom;
@@ -47,6 +48,17 @@ pub struct Bus<'call> {
 
 impl<'a> Bus<'a> {
     // Mock Bus
+    pub fn empty_bus() -> Self {
+        let ppu = NesPPU::new([].to_vec(), Mirroring::VERTICAL);
+        Bus {
+            cpu_vram: [0; 2048],
+            prg_rom: [0; 0x4000].to_vec(),
+            ppu : ppu,
+            cycles: 0,
+            gameloop_callback: Box::new(|_ : &NesPPU|{}),
+        }
+    }
+
     pub fn mock_bus(code: Vec<u8>) -> Self {
         let rom = mock_rom(code);
         let ppu = NesPPU::new(rom.chr_rom, rom.screen_mirroring);
@@ -96,6 +108,58 @@ impl<'a> Bus<'a> {
             addr = addr % 0x4000;
         }
         self.prg_rom[addr as usize]
+    }
+
+    fn write_prg_rom(&mut self, mut addr: u16, data: u8) {
+        addr -= 0x8000;
+        if self.prg_rom.len() == 0x4000 && addr >= 0x4000 {
+            // Mirror if needed
+            addr = addr % 0x4000;
+        }
+        self.prg_rom[addr as usize] = data;
+    }
+
+    pub fn write_mem(&mut self, addr: u16, data: u8) {
+        match addr {
+            RAM ..= RAM_MIRRORS_END => {
+                let mirror_down_addr = addr & 0b11111111_11111111;
+                self.cpu_vram[mirror_down_addr as usize] = data;
+            }
+            0x2000 => {
+                self.ppu.write_to_ctrl(data);
+            }
+            0x2001 => {
+                self.ppu.write_to_mask(data);
+            }
+            0x2002 => {
+                self.ppu.write_to_status(data);
+                // panic!("Attempt to write to PPU status register!");
+            }
+            0x2003 => {
+                self.ppu.write_to_oam_addr(data);
+            }
+            0x2004 => {
+                self.ppu.write_to_oam_data(data);
+            }
+            0x2006 => {
+                self.ppu.write_to_ppu_addr(data);
+            }
+            0x2007 => {
+                self.ppu.write_to_ppu_data(data);
+            }
+
+            0x2008 ..= PPU_REGISTERS_MIRRORS_END => {
+                let mirror_down_addr = addr & 0b00100000_00000111;
+                self.mem_write(mirror_down_addr, data);
+            }
+            0x8000 ..= 0xFFFF => {
+                self.write_prg_rom(addr, data);
+                // panic!("Attempt to write to Cartridge ROM space");
+            }
+            _ => {
+                println!("Ignoring mem write-access at {:#X}", addr);
+            }
+        }
     }
 
 }
