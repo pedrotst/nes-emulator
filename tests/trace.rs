@@ -1,5 +1,6 @@
     use nes_emulator::cpu::*;
     use nes_emulator::cartridge::*;
+    use nes_emulator::ppu::NesPPU;
     use nes_emulator::trace::trace;
     use nes_emulator::bus::Bus;
 
@@ -18,7 +19,7 @@
 
     #[test]
     fn test_format_trace() {
-        let mut bus = Bus::new(mock_rom(vec![]));
+        let mut bus = Bus::new(mock_rom(vec![]), |_:&NesPPU|());
         bus.mem_write(0x0064, 0xa2);
         bus.mem_write(0x0065, 0x01);
         bus.mem_write(0x0066, 0xca);
@@ -50,7 +51,7 @@
 
    #[test]
    fn test_format_mem_access() {
-       let mut bus = Bus::new(mock_rom(vec![]));
+        let mut bus = Bus::new(mock_rom(vec![]), |_:&NesPPU|());
        // ORA ($33), Y
        bus.mem_write(0x64, 0x11);
        bus.mem_write(0x65, 0x33);

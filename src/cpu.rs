@@ -24,7 +24,7 @@ pub enum AddressingMode {
 
 const STACK_RESET: u8 = 0xFD;
 
-pub struct CPU {
+pub struct CPU<'a> {
     pub register_a: u8,
     pub register_x: u8,
     pub register_y: u8,
@@ -32,7 +32,7 @@ pub struct CPU {
     pub stack_pointer: u8,
     pub program_counter: u16,
     // memory: [u8; 0xFFFF],
-    pub bus: Bus,
+    pub bus: Bus<'a>,
 }
 
 pub trait Mem {
@@ -57,7 +57,7 @@ fn page_cross(lhs: u16, rhs: u16) -> bool {
     (lhs & 0xFF00) != (rhs & 0xFF00)
 }
 
-impl Mem for CPU {
+impl Mem for CPU<'_> {
     fn mem_read(&mut self, addr: u16) -> u8 {
         self.bus.mem_read(addr)
         // self.memory[addr as usize]
@@ -77,7 +77,7 @@ impl Mem for CPU {
     }
 }
 
-impl CPU {
+impl<'a> CPU<'a> {
     pub fn mock_cpu(code: Vec<u8>) -> Self {
         CPU {
             register_a: 0,
@@ -165,7 +165,7 @@ impl CPU {
         }
     }
 
-    pub fn new(bus: Bus) -> Self {
+    pub fn new<'b>(bus: Bus<'b>) -> CPU<'b> {
         CPU {
             register_a: 0,
             register_x: 0,
@@ -608,7 +608,7 @@ impl CPU {
     }
 
     fn jsr(&mut self, mode: &AddressingMode) {
-        let (new_pc, page_cross) = self.get_operand_address(mode);
+        let (new_pc, _page_cross) = self.get_operand_address(mode);
         self.push_stack_u16(self.program_counter + 1);
         self.program_counter = new_pc;
     }

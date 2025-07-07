@@ -33,18 +33,19 @@ use crate::ppu::*;
 
 const RAM: u16 = 0x0000;
 const RAM_MIRRORS_END: u16 = 0x1FFF;
-const PPU_REGISTERS: u16 = 0x2000;
+const _PPU_REGISTERS: u16 = 0x2000;
 const PPU_REGISTERS_MIRRORS_END: u16 = 0x3FFF;
 
-pub struct Bus {
+pub struct Bus<'call> {
     cpu_vram: [u8; 2048],
     prg_rom: Vec<u8>,
     ppu: NesPPU,
 
     pub cycles: usize,
+    gameloop_callback: Box<dyn FnMut(&NesPPU) + 'call>
 }
 
-impl Bus {
+impl<'a> Bus<'a> {
     // Mock Bus
     pub fn mock_bus(code: Vec<u8>) -> Self {
         let rom = mock_rom(code);
@@ -54,21 +55,34 @@ impl Bus {
             prg_rom: rom.prg_rom,
             ppu : ppu,
             cycles: 0,
+            gameloop_callback: Box::new(|_ : &NesPPU|{}),
         }
     }
 
-    pub fn new(rom: Rom) -> Self {
+    pub fn new<'call, F>(rom: Rom, gameloop_callback: F) -> Bus<'call> 
+    where
+        F : FnMut(&NesPPU) + 'call,
+    {
         let ppu = NesPPU::new(rom.chr_rom, rom.screen_mirroring);
         Bus {
             cpu_vram: [0; 2048],
             prg_rom: rom.prg_rom,
             ppu: ppu,
             cycles: 0,
+            gameloop_callback: Box::from(gameloop_callback),
         }
     }
     pub fn tick(&mut self, cycles: u8) {
         self.cycles += cycles as usize;
+
+        let nmi_before = self.ppu.nmi_interrupt.is_some();
         self.ppu.tick(cycles * 3);
+        let nmi_after = self.ppu.nmi_interrupt.is_some();
+
+        if !nmi_before && nmi_after {
+            // (self.gameloop_callback)(&self.ppu, &mut self.joypad1);
+            (self.gameloop_callback)(&self.ppu);
+        }
     }
 
     pub fn poll_nmi_status(&mut self) -> Option<u8> {
@@ -86,7 +100,7 @@ impl Bus {
 
 }
 
-impl Mem for Bus {
+impl<'a> Mem for Bus<'a> {
     fn mem_read(&mut self, addr: u16) -> u8 {
         match addr {
             RAM ..= RAM_MIRRORS_END => {
