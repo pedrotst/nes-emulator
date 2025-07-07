@@ -1,7 +1,9 @@
-use crate::palete;
+pub mod palette;
+pub mod frame;
+
 use crate::ppu::NesPPU;
 
-use crate::frame::Frame;
+use frame::Frame;
 
 pub fn render(ppu: &NesPPU, frame: &mut Frame) {
     let bank = ppu.ctrl.bkgd_pattern_addr();
@@ -22,10 +24,10 @@ pub fn render(ppu: &NesPPU, frame: &mut Frame) {
                 lower = lower >> 1;
 
                 let rgb = match value {
-                    0 => palete::SYSTEM_PALLETE[0x01],
-                    1 => palete::SYSTEM_PALLETE[0x23],
-                    2 => palete::SYSTEM_PALLETE[0x27],
-                    3 => palete::SYSTEM_PALLETE[0x30],
+                    0 => palette::SYSTEM_PALETTE[0x01],
+                    1 => palette::SYSTEM_PALETTE[0x23],
+                    2 => palette::SYSTEM_PALETTE[0x27],
+                    3 => palette::SYSTEM_PALETTE[0x30],
                     _ => panic!("Can't be"),
                 };
                 frame.set_pixel(tile_x * 8 + x, tile_y * 8 + y, rgb);

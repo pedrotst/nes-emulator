@@ -1,6 +1,10 @@
+pub mod registers;
+
 use crate::cartridge::Mirroring;
 
-use bitflags::bitflags;
+use registers::control::PPUCTRL;
+use registers::mask::PPUMASK;
+use registers::status::PPUSTATUS;
 
 pub struct NesPPU {
     pub chr_rom: Vec<u8>,
@@ -106,7 +110,7 @@ impl NesPPU {
     }
     
     pub fn read_status(&mut self) -> u8{
-        let data = self.status.bits;
+        let data = self.status.data();
 
         self.status.reset_vblank_status();
         self.scroll.reset_latch();
@@ -243,12 +247,15 @@ impl PPUADDR {
         self.hi_ptr = true;
     }
 }
+
+#[allow(dead_code)]
 pub struct PPUSCROLL {
     scroll_x: u8,
     scroll_y: u8,
     latch: bool,
 }
 
+#[allow(dead_code)]
 impl PPUSCROLL {
     pub fn new() -> Self {
         PPUSCROLL {
@@ -269,155 +276,5 @@ impl PPUSCROLL {
 
     pub fn reset_latch(&mut self) {
         self.latch = true;
-    }
-}
-
-bitflags! {
-   // 7  bit  0
-   // ---- ----
-   // VPHB SINN
-   // |||| ||||
-   // |||| ||++- Base nametable address
-   // |||| ||    (0 = $2000; 1 = $2400; 2 = $2800; 3 = $2C00)
-   // |||| |+--- VRAM address increment per CPU read/write of PPUDATA
-   // |||| |     (0: add 1, going across; 1: add 32, going down)
-   // |||| +---- Sprite pattern table address for 8x8 sprites
-   // ||||       (0: $0000; 1: $1000; ignored in 8x16 mode)
-   // |||+------ Background pattern table address (0: $0000; 1: $1000)
-   // ||+------- Sprite size (0: 8x8 pixels; 1: 8x16 pixels)
-   // |+-------- PPU master/slave select
-   // |          (0: read backdrop from EXT pins; 1: output color on EXT pins)
-   // +--------- Generate an NMI at the start of the
-   //            vertical blanking interval (0: off; 1: on)
-
-   pub struct PPUCTRL: u8 {
-        const NAMETABLE1              = 0b0000_0001;
-        const NAMETABLE2              = 0b0000_0010;
-        const VRAM_ADD_INCREMENT      = 0b0000_0100;
-        const SPRITE_PATTERN_ADDR     = 0b0000_1000;
-        const BACKGROUND_PATTERN_ADDR = 0b0001_0000;
-        const SPRITE_SIZE             = 0b0010_0000;
-        const MASTER_SLAVE_SELECT     = 0b0100_0000;
-        const GENERATE_NMI            = 0b1000_0000;
-   }
-}
-
-impl PPUCTRL {
-    pub fn new() -> Self {
-        PPUCTRL::from_bits_truncate(0b0000_0000)
-    }
-
-    pub fn bkgd_pattern_addr(&self) -> u16 {
-        if self.contains(PPUCTRL::BACKGROUND_PATTERN_ADDR) {
-            0x1000
-        }
-        else {
-            0
-        }
-    }
-
-    pub fn vram_addr_increment(&self) -> u8 {
-        if !self.contains(PPUCTRL::VRAM_ADD_INCREMENT) {
-            1
-        } else {
-            32
-        }
-    }
-    pub fn generate_vblank_nmi(&mut self) -> bool {
-        self.contains(PPUCTRL::GENERATE_NMI)
-    }
-
-    pub fn update(&mut self, data: u8) {
-        self.bits = data;
-    }
-}
-
-bitflags! {
-// 7  bit  0
-// ---- ----
-// BGRs bMmG
-// |||| ||||
-// |||| |||+- Greyscale (0: normal color, 1: greyscale)
-// |||| ||+-- 1: Show background in leftmost 8 pixels of screen, 0: Hide
-// |||| |+--- 1: Show sprites in leftmost 8 pixels of screen, 0: Hide
-// |||| +---- 1: Enable background rendering
-// |||+------ 1: Enable sprite rendering
-// ||+------- Emphasize red (green on PAL/Dendy)
-// |+-------- Emphasize green (red on PAL/Dendy)
-// +--------- Emphasize blue
-
-   pub struct PPUMASK: u8 {
-        const GREYSCALE         = 0b0000_0001;
-        const SHOW_BACKGROUND   = 0b0000_0010;
-        const SHOW_SPRITE       = 0b0000_0100;
-        const ENABLE_BACKGROUND = 0b0000_1000;
-        const ENABLE_SPRITE     = 0b0001_0000;
-        const EMPH_RED          = 0b0010_0000;
-        const EMPTH_BLUE        = 0b0100_0000;
-        const EMPTH_GREEN       = 0b0100_0000;
-   }
-
-}
-
-impl PPUMASK {
-    pub fn new() -> Self {
-        PPUMASK::from_bits_truncate(0b0000_0000)
-    }
-
-    // TODO: Reads and writes to this should be ignored after power reset
-    // until first pre-render scanline
-    pub fn update(&mut self, data: u8) {
-        self.bits = data;
-    }
-}
-bitflags! {
-// 7  bit  0
-// ---- ----
-// VSOx xxxx
-// |||| ||||
-// |||+-++++- (PPU open bus or 2C05 PPU identifier)
-// ||+------- Sprite overflow flag
-// |+-------- Sprite 0 hit flag
-// +--------- Vblank flag, cleared on read. Unreliable; see below.
-
-   pub struct PPUSTATUS: u8 {
-        const OPEN_BUS1       = 0b0000_0001;
-        const OPEN_BUS2       = 0b0000_0010;
-        const OPEN_BUS3       = 0b0000_0100;
-        const OPEN_BUS4       = 0b0000_1000;
-        const OPEN_BUS5       = 0b0001_0000;
-        const SPRITE_OVERFLOW = 0b0010_0000;
-        const SPRITE_0_HIT    = 0b0100_0000;
-        const VBLANK          = 0b1000_0000;
-   }
-
-}
-
-impl PPUSTATUS {
-    pub fn new() -> Self {
-        PPUSTATUS::from_bits_truncate(0b0000_0000)
-    }
-
-    // TODO: Reads and writes to this should be ignored after power reset
-    // until first pre-render scanline
-    pub fn update(&mut self, data: u8) {
-        self.bits = data;
-    }
-
-    pub fn is_in_vblank(self) -> bool {
-        self.contains(PPUSTATUS::VBLANK)
-    }
-
-    pub fn reset_vblank_status(&mut self) {
-        self.remove(PPUSTATUS::VBLANK);
-    }
-
-    pub fn set_vblank_status(&mut self, status: bool) {
-        if status {
-            self.insert(PPUSTATUS::VBLANK);
-        }
-        else {
-            self.remove(PPUSTATUS::VBLANK);
-        }
     }
 }

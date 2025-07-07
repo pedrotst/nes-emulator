@@ -5,6 +5,4 @@ pub mod bus;
 pub mod cartridge;
 pub mod trace;
 pub mod ppu;
-pub mod frame;
-pub mod palete;
 pub mod render;

@@ -2,20 +2,16 @@ pub mod bus;
 pub mod byte_utils;
 pub mod cartridge;
 pub mod cpu;
-pub mod frame;
 pub mod opcodes;
-pub mod palete;
 pub mod ppu;
 pub mod trace;
 pub mod render;
 
-use bus::Bus;
 use cartridge::Rom;
 use cpu::CPU;
 use cpu::Mem;
-use frame::Frame;
-use ppu::NesPPU;
-use trace::trace;
+use render::frame::Frame;
+use render::palette;
 
 // use rand::Rng;
 use sdl2::EventPump;
@@ -25,8 +21,6 @@ use sdl2::pixels::Color;
 use sdl2::pixels::PixelFormatEnum;
 use sdl2::rect::Rect;
 
-use std::fs::File;
-use std::io::Read;
 use std::path::Path;
 
 // const ROM: &str = "snake.nes";
@@ -57,6 +51,7 @@ fn main() {
     let bytes = std::fs::read(path).unwrap();
     let rom = Rom::new(&bytes).unwrap();
 
+    /*
     let mut frame = Frame::new();
 
     let bus = Bus::new(rom, move |ppu: &NesPPU| {
@@ -80,8 +75,8 @@ fn main() {
     let mut cpu = CPU::new(bus);
     cpu.reset();
     cpu.run();
+    */
 
-    /*
     for y in 0..=11 {
         for x in 0..=19 {
             let tile_frame = show_tile(&rom.chr_rom, 1, (y * 20)+ x);
@@ -106,7 +101,6 @@ fn main() {
             }
         }
     }
-    */
 
     /*
     let mut file = File::open(&path).unwrap();
@@ -253,10 +247,10 @@ fn show_tile(chr_rom: &Vec<u8>, bank: usize, tile_n: usize) -> Frame {
             upper = upper >> 1;
             lower = lower >> 1;
             let rgb = match value {
-                0 => palete::SYSTEM_PALLETE[0x01],
-                1 => palete::SYSTEM_PALLETE[0x23],
-                2 => palete::SYSTEM_PALLETE[0x27],
-                3 => palete::SYSTEM_PALLETE[0x30],
+                0 => palette::SYSTEM_PALETTE[0x01],
+                1 => palette::SYSTEM_PALETTE[0x23],
+                2 => palette::SYSTEM_PALETTE[0x27],
+                3 => palette::SYSTEM_PALETTE[0x30],
                 _ => panic!("can't be"),
             };
             frame.set_pixel(x, y, rgb);
