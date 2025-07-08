@@ -64,17 +64,18 @@ fn run_singlesteps() {
         cpu.bus.write_mem(*addr, *data);
     }
 
-    cpu.run_with_callback(|cpu| {
-        // println!("Running!");
-        (trace(cpu));
+    cpu.step(|cpu| {
+        println!("{}", trace(cpu));
     });
     assert_eq!(cpu.register_a, first.r#final.a);
     assert_eq!(cpu.register_x, first.r#final.x);
     assert_eq!(cpu.register_y, first.r#final.y);
-    assert_eq!(cpu.status, first.r#final.p);
     assert_eq!(cpu.stack_pointer, first.r#final.s);
+    assert_eq!(cpu.status, first.r#final.p);
     assert_eq!(cpu.program_counter, first.r#final.pc);
 
+    // 97 = 0110 0001
+    // 101= 0110 0101
     // assert!(false);
 }
 

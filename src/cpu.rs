@@ -95,11 +95,9 @@ impl<'a> CPU<'a> {
         match mode {
             AddressingMode::Immediate => (self.program_counter, false),
 
-            AddressingMode::ZeroPage => 
-            (self.mem_read(self.program_counter) as u16, false),
+            AddressingMode::ZeroPage => (self.mem_read(self.program_counter) as u16, false),
 
-            AddressingMode::Absolute => 
-            (self.mem_read_u16(self.program_counter), false),
+            AddressingMode::Absolute => (self.mem_read_u16(self.program_counter), false),
 
             AddressingMode::ZeroPage_X => {
                 let pos = self.mem_read(self.program_counter);
@@ -157,7 +155,7 @@ impl<'a> CPU<'a> {
                 (deref, page_cross(deref_base, deref))
             }
 
-            AddressingMode::Relative => (0, false) ,
+            AddressingMode::Relative => (0, false),
 
             AddressingMode::NoneAddressing => {
                 panic!("mode {:?} is not supported", mode)
@@ -518,22 +516,22 @@ impl<'a> CPU<'a> {
         }
     }
 
-    fn slo(&mut self, mode: &AddressingMode){
+    fn slo(&mut self, mode: &AddressingMode) {
         self.asl(mode);
         self.or(mode);
     }
 
-    fn rla(&mut self, mode: &AddressingMode){
+    fn rla(&mut self, mode: &AddressingMode) {
         self.rol(mode);
         self.and(mode);
     }
 
-    fn sre(&mut self, mode: &AddressingMode){
+    fn sre(&mut self, mode: &AddressingMode) {
         self.lsr(mode);
         self.eor(mode);
     }
 
-    fn rra(&mut self, mode: &AddressingMode){
+    fn rra(&mut self, mode: &AddressingMode) {
         self.ror(mode);
         self.adc_sbc(mode, false);
     }
@@ -678,13 +676,12 @@ impl<'a> CPU<'a> {
 
         let result = self.register_a.wrapping_sub(data);
 
-
         if self.register_a >= data {
             byte_utils::set_carry(&mut self.status);
         } else {
             byte_utils::unset_carry(&mut self.status);
         }
-        
+
         // self.update_carry(carry);
         self.update_negative_flag(result);
         self.update_zero_flag(result);
@@ -704,13 +701,12 @@ impl<'a> CPU<'a> {
         self.push_stack(self.status | 0b0011_0000);
     }
 
-    /*
     fn brk(&mut self) {
         self.push_stack_u16(self.program_counter + 2);
         self.push_stack(self.status | 0b0011_0000);
         byte_utils::set_interrupt_disable(&mut self.status);
-        self.program_counter = 0xFFFE;
-    } */
+        self.program_counter = self.mem_read_u16(0xFFFE);
+    }
 
     fn update_carry(&mut self, cond: bool) {
         if cond {
@@ -773,313 +769,313 @@ impl<'a> CPU<'a> {
 
         self.bus.tick(2);
         self.program_counter = self.mem_read_u16(0xfffa)
-
     }
 
     pub fn run_with_callback<F>(&mut self, mut callback: F)
     where
         F: FnMut(&mut CPU),
     {
-        let ref opcodes: HashMap<u8, &'static opcodes::OpCode> = *opcodes::OPCODES_MAP;
-
         loop {
-            if let Some(_nmi) = self.bus.poll_nmi_status() {
-                self.interrupt_nmi();
-            }
-            callback(self);
-            let code = self.mem_read(self.program_counter);
-            self.program_counter += 1;
-            let program_counter_state = self.program_counter;
-
-            let opcode = opcodes
-                .get(&code)
-                .expect(&format!("OpCode {:x} is not recognized", code));
-
-            match opcode.mneumonic {
-                "LDA" => {
-                    self.lda(&opcode.mode);
-                }
-                "LAX" => {
-                    self.lax(&opcode.mode);
-                }
-
-                "LDX" => {
-                    self.ldx(&opcode.mode);
-                }
-                "LDY" => {
-                    self.ldy(&opcode.mode);
-                }
-
-                "STA" => {
-                    self.sta(&opcode.mode);
-                }
-
-                "STX" => {
-                    self.stx(&opcode.mode);
-                }
-
-                "SAX" => {
-                    self.sax(&opcode.mode);
-                }
-
-                "STY" => {
-                    self.sty(&opcode.mode);
-                }
-
-                /* Register Instructions */
-                "TAX" => {
-                    self.tax();
-                }
-
-                "TXA" => {
-                    self.txa();
-                }
-
-                "TAY" => {
-                    self.tay();
-                }
-
-                "TYA" => {
-                    self.tya();
-                }
-
-                "INX" => {
-                    self.inx();
-                }
-                "DEX" => {
-                    self.dex();
-                }
-
-                "INY" => {
-                    self.iny();
-                }
-                "DEY" => {
-                    self.dey();
-                }
-
-                /* Logical Operations */
-                "ASL A" => {
-                    self.asl_accumulator();
-                }
-
-                "ASL" => {
-                    self.asl(&opcode.mode);
-                }
-
-                "LSR A" => {
-                    self.lsr_accumulator();
-                }
-
-                "LSR" => {
-                    self.lsr(&opcode.mode);
-                }
-
-                "ROL A" => {
-                    self.rol_accumulator();
-                }
-
-                "ROL" => {
-                    self.rol(&opcode.mode);
-                }
-
-                "ROR A" => {
-                    self.ror_accumulator();
-                }
-
-                "ROR" => {
-                    self.ror(&opcode.mode);
-                }
-
-                /* BITWISE */
-                "AND" => {
-                    self.and(&opcode.mode);
-                }
-
-                "ORA" => {
-                    self.or(&opcode.mode);
-                }
-
-                "EOR" => {
-                    self.eor(&opcode.mode);
-                }
-
-                "BIT" => {
-                    self.bit(&opcode.mode);
-                }
-
-                "SLO" => {
-                    self.slo(&opcode.mode);
-                }
-
-
-                "RLA" => {
-                    self.rla(&opcode.mode);
-                }
-
-                "SRE" => {
-                    self.sre(&opcode.mode);
-                }
-
-                "RRA" => {
-                    self.rra(&opcode.mode);
-                }
-
-                /* Compare X and Y */
-                "CMP" => {
-                    self.compare(&opcode.mode, self.register_a);
-                }
-
-                "CPX" => {
-                    self.compare(&opcode.mode, self.register_x);
-                }
-
-                "CPY" => {
-                    self.compare(&opcode.mode, self.register_y);
-                }
-
-                /* Flag Management */
-                "SEC" => {
-                    byte_utils::set_carry(&mut self.status);
-                }
-                "SED" => {
-                    byte_utils::set_decimal(&mut self.status);
-                }
-                "SEI" => {
-                    byte_utils::set_interrupt_disable(&mut self.status);
-                }
-
-                "CLC" => {
-                    byte_utils::unset_carry(&mut self.status);
-                }
-                "CLD" => {
-                    byte_utils::unset_decimal(&mut self.status);
-                }
-                "CLI" => {
-                    byte_utils::unset_interrupt_disable(&mut self.status);
-                }
-                "CLV" => {
-                    byte_utils::unset_overflow(&mut self.status);
-                }
-
-                /* Arithmetic */
-                "ADC" => {
-                    self.adc_sbc(&opcode.mode, false);
-                }
-                "SBC" => {
-                    self.adc_sbc(&opcode.mode, true);
-                }
-
-                /* Branch */
-                "BNE" => {
-                    self.branch(byte_utils::is_zero_set(self.status) == false);
-                }
-                "BEQ" => {
-                    self.branch(byte_utils::is_zero_set(self.status) == true);
-                }
-
-                "BCC" => {
-                    self.branch(byte_utils::is_carry_set(self.status) == false);
-                }
-                "BCS" => {
-                    self.branch(byte_utils::is_carry_set(self.status) == true);
-                }
-
-                "BMI" => {
-                    self.branch(byte_utils::is_negative_set(self.status) == true);
-                }
-                "BPL" => {
-                    self.branch(byte_utils::is_negative_set(self.status) == false);
-                }
-
-                "BVC" => {
-                    self.branch(byte_utils::is_overflow_set(self.status) == false);
-                }
-                "BVS" => {
-                    self.branch(byte_utils::is_overflow_set(self.status) == true);
-                }
-
-                "JMP" => {
-                    self.jmp(&opcode.mode);
-                }
-
-                "JSR" => {
-                    self.jsr(&opcode.mode);
-                }
-
-                "RTS" => {
-                    self.rts();
-                }
-
-                /* Stack Operations */
-                "PHA" => {
-                    self.pha();
-                }
-                "PLA" => {
-                    self.pla();
-                }
-
-                "TXS" => {
-                    self.txs();
-                }
-                "TSX" => {
-                    self.tsx();
-                }
-
-                "PHP" => {
-                    self.php();
-                }
-                "PLP" => {
-                    self.plp();
-                }
-                "RTI" => {
-                    self.rti();
-                }
-
-                /* Memory */
-                "INC" => {
-                    self.inc(&opcode.mode);
-                }
-                "DEC" => {
-                    self.dec(&opcode.mode);
-                }
-
-                "DCP" => {
-                    self.dcp(&opcode.mode);
-                }
-
-                "ISB" => {
-                    self.isb(&opcode.mode);
-                }
-
-                "NOP" => {
-                    if opcode.len == 3 {
-                        let (_, page_cross) = self.get_operand_address(&opcode.mode);
-                        if page_cross {
-                            self.bus.tick(1);
-                        }
-                    }
-
-                }
-
-                /* Break */
-                "BRK" => {
-                    // self.brk();
-                    return;
-                }
-
-                _ => todo!(),
-            }
-
-            self.bus.tick(opcode.cycles);
-
-            if program_counter_state == self.program_counter {
-                self.program_counter += (opcode.len - 1) as u16;
-            }
+            self.step(&mut callback);
         }
     }
 
+    pub fn step<F>(&mut self, mut callback: F)
+    where
+        F: FnMut(&mut CPU),
+    {
+        let ref opcodes: HashMap<u8, &'static opcodes::OpCode> = *opcodes::OPCODES_MAP;
+        if let Some(_nmi) = self.bus.poll_nmi_status() {
+            self.interrupt_nmi();
+        }
+        callback(self);
+        let code = self.mem_read(self.program_counter);
+        self.program_counter += 1;
+        let program_counter_state = self.program_counter;
+
+        let opcode = opcodes
+            .get(&code)
+            .expect(&format!("OpCode {:x} is not recognized", code));
+
+        match opcode.mneumonic {
+            "LDA" => {
+                self.lda(&opcode.mode);
+            }
+            "LAX" => {
+                self.lax(&opcode.mode);
+            }
+
+            "LDX" => {
+                self.ldx(&opcode.mode);
+            }
+            "LDY" => {
+                self.ldy(&opcode.mode);
+            }
+
+            "STA" => {
+                self.sta(&opcode.mode);
+            }
+
+            "STX" => {
+                self.stx(&opcode.mode);
+            }
+
+            "SAX" => {
+                self.sax(&opcode.mode);
+            }
+
+            "STY" => {
+                self.sty(&opcode.mode);
+            }
+
+            /* Register Instructions */
+            "TAX" => {
+                self.tax();
+            }
+
+            "TXA" => {
+                self.txa();
+            }
+
+            "TAY" => {
+                self.tay();
+            }
+
+            "TYA" => {
+                self.tya();
+            }
+
+            "INX" => {
+                self.inx();
+            }
+            "DEX" => {
+                self.dex();
+            }
+
+            "INY" => {
+                self.iny();
+            }
+            "DEY" => {
+                self.dey();
+            }
+
+            /* Logical Operations */
+            "ASL A" => {
+                self.asl_accumulator();
+            }
+
+            "ASL" => {
+                self.asl(&opcode.mode);
+            }
+
+            "LSR A" => {
+                self.lsr_accumulator();
+            }
+
+            "LSR" => {
+                self.lsr(&opcode.mode);
+            }
+
+            "ROL A" => {
+                self.rol_accumulator();
+            }
+
+            "ROL" => {
+                self.rol(&opcode.mode);
+            }
+
+            "ROR A" => {
+                self.ror_accumulator();
+            }
+
+            "ROR" => {
+                self.ror(&opcode.mode);
+            }
+
+            /* BITWISE */
+            "AND" => {
+                self.and(&opcode.mode);
+            }
+
+            "ORA" => {
+                self.or(&opcode.mode);
+            }
+
+            "EOR" => {
+                self.eor(&opcode.mode);
+            }
+
+            "BIT" => {
+                self.bit(&opcode.mode);
+            }
+
+            "SLO" => {
+                self.slo(&opcode.mode);
+            }
+
+            "RLA" => {
+                self.rla(&opcode.mode);
+            }
+
+            "SRE" => {
+                self.sre(&opcode.mode);
+            }
+
+            "RRA" => {
+                self.rra(&opcode.mode);
+            }
+
+            /* Compare X and Y */
+            "CMP" => {
+                self.compare(&opcode.mode, self.register_a);
+            }
+
+            "CPX" => {
+                self.compare(&opcode.mode, self.register_x);
+            }
+
+            "CPY" => {
+                self.compare(&opcode.mode, self.register_y);
+            }
+
+            /* Flag Management */
+            "SEC" => {
+                byte_utils::set_carry(&mut self.status);
+            }
+            "SED" => {
+                byte_utils::set_decimal(&mut self.status);
+            }
+            "SEI" => {
+                byte_utils::set_interrupt_disable(&mut self.status);
+            }
+
+            "CLC" => {
+                byte_utils::unset_carry(&mut self.status);
+            }
+            "CLD" => {
+                byte_utils::unset_decimal(&mut self.status);
+            }
+            "CLI" => {
+                byte_utils::unset_interrupt_disable(&mut self.status);
+            }
+            "CLV" => {
+                byte_utils::unset_overflow(&mut self.status);
+            }
+
+            /* Arithmetic */
+            "ADC" => {
+                self.adc_sbc(&opcode.mode, false);
+            }
+            "SBC" => {
+                self.adc_sbc(&opcode.mode, true);
+            }
+
+            /* Branch */
+            "BNE" => {
+                self.branch(byte_utils::is_zero_set(self.status) == false);
+            }
+            "BEQ" => {
+                self.branch(byte_utils::is_zero_set(self.status) == true);
+            }
+
+            "BCC" => {
+                self.branch(byte_utils::is_carry_set(self.status) == false);
+            }
+            "BCS" => {
+                self.branch(byte_utils::is_carry_set(self.status) == true);
+            }
+
+            "BMI" => {
+                self.branch(byte_utils::is_negative_set(self.status) == true);
+            }
+            "BPL" => {
+                self.branch(byte_utils::is_negative_set(self.status) == false);
+            }
+
+            "BVC" => {
+                self.branch(byte_utils::is_overflow_set(self.status) == false);
+            }
+            "BVS" => {
+                self.branch(byte_utils::is_overflow_set(self.status) == true);
+            }
+
+            "JMP" => {
+                self.jmp(&opcode.mode);
+            }
+
+            "JSR" => {
+                self.jsr(&opcode.mode);
+            }
+
+            "RTS" => {
+                self.rts();
+            }
+
+            /* Stack Operations */
+            "PHA" => {
+                self.pha();
+            }
+            "PLA" => {
+                self.pla();
+            }
+
+            "TXS" => {
+                self.txs();
+            }
+            "TSX" => {
+                self.tsx();
+            }
+
+            "PHP" => {
+                self.php();
+            }
+            "PLP" => {
+                self.plp();
+            }
+            "RTI" => {
+                self.rti();
+            }
+
+            /* Memory */
+            "INC" => {
+                self.inc(&opcode.mode);
+            }
+            "DEC" => {
+                self.dec(&opcode.mode);
+            }
+
+            "DCP" => {
+                self.dcp(&opcode.mode);
+            }
+
+            "ISB" => {
+                self.isb(&opcode.mode);
+            }
+
+            "NOP" => {
+                if opcode.len == 3 {
+                    let (_, page_cross) = self.get_operand_address(&opcode.mode);
+                    if page_cross {
+                        self.bus.tick(1);
+                    }
+                }
+            }
+
+            /* Break */
+            "BRK" => {
+                self.brk();
+            }
+
+            _ => todo!(),
+        }
+
+        self.bus.tick(opcode.cycles);
+
+        if program_counter_state == self.program_counter {
+            self.program_counter += (opcode.len - 1) as u16;
+        }
+    }
 }
 
 #[cfg(test)]
-mod test {
-}
+mod test {}

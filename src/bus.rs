@@ -211,6 +211,9 @@ impl<'a> Mem for Bus<'a> {
             0x2004 => {
                 self.ppu.write_to_oam_data(data);
             }
+            0x2005 => {
+                self.ppu.write_to_scroll(data);
+            }
             0x2006 => {
                 self.ppu.write_to_ppu_addr(data);
             }

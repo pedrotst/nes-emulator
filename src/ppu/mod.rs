@@ -5,6 +5,7 @@ use crate::cartridge::Mirroring;
 use registers::control::PPUCTRL;
 use registers::mask::PPUMASK;
 use registers::status::PPUSTATUS;
+use registers::scroll::PPUSCROLL;
 
 pub struct NesPPU {
     pub chr_rom: Vec<u8>,
@@ -99,6 +100,10 @@ impl NesPPU {
 
     pub fn write_to_status(&mut self, value: u8) {
         self.status.update(value);
+    }
+
+    pub fn write_to_scroll(&mut self, value: u8) {
+        self.scroll.set(value);
     }
 
     pub fn write_to_oam_addr(&mut self, value: u8) {
@@ -245,36 +250,5 @@ impl PPUADDR {
 
     pub fn reset_latch(&mut self) {
         self.hi_ptr = true;
-    }
-}
-
-#[allow(dead_code)]
-pub struct PPUSCROLL {
-    scroll_x: u8,
-    scroll_y: u8,
-    latch: bool,
-}
-
-#[allow(dead_code)]
-impl PPUSCROLL {
-    pub fn new() -> Self {
-        PPUSCROLL {
-            scroll_x: 0,
-            scroll_y: 0,
-            latch: true,
-        }
-    }
-
-    fn set(&mut self, data: u8) {
-        if self.latch {
-            self.scroll_x = data;
-        } else {
-            self.scroll_y = data;
-        }
-        self.latch = !self.latch;
-    }
-
-    pub fn reset_latch(&mut self) {
-        self.latch = true;
     }
 }
