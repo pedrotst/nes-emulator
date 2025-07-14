@@ -60,12 +60,10 @@ fn page_cross(lhs: u16, rhs: u16) -> bool {
 impl Mem for CPU<'_> {
     fn mem_read(&mut self, addr: u16) -> u8 {
         self.bus.mem_read(addr)
-        // self.memory[addr as usize]
     }
 
     fn mem_write(&mut self, addr: u16, data: u8) {
         self.bus.mem_write(addr, data)
-        // self.memory[addr as usize] = data;
     }
 
     fn mem_read_u16(&mut self, pos: u16) -> u16 {
