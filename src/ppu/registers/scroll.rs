@@ -25,4 +25,8 @@ impl PPUSCROLL {
     pub fn reset_latch(&mut self) {
         self.latch = true;
     }
+
+    pub fn read(&mut self) -> u16 {
+        (self.scroll_x as u16) << 8 | (self.scroll_y as u16)
+    }
 }

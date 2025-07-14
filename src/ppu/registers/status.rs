@@ -51,7 +51,4 @@ impl PPUSTATUS {
         }
     }
 
-    pub fn data(&self) -> u8 {
-        self.bits()
-    }
 }

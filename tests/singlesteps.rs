@@ -1,10 +1,32 @@
-use std::{fs::File, io::{BufRead, BufReader, Read}, path::Path};
 use derive_more::Display;
+use std::{
+    fs::File,
+    io::{BufRead, BufReader, Read},
+    path::Path,
+};
 
-use nes_emulator::{bus::Bus, cartridge::Rom, cpu::{Mem, CPU}};
 use nes_emulator::trace::trace;
+use nes_emulator::{
+    bus::Bus,
+    cartridge::Rom,
+    cpu::{CPU, Mem},
+};
 
 use serde::Deserialize;
+
+macro_rules! assert_cpu_eq {
+    ($left:expr, $right:expr, $test_id:expr, $field_name:expr) => {
+        assert_eq!(
+            $left,
+            $right,
+            "Test {} failed: {} mismatch — got {}, expected {}",
+            $test_id,
+            $field_name,
+            $left,
+            $right
+        );
+    };
+}
 
 #[derive(Debug, Deserialize)]
 pub struct InternalState {
@@ -27,7 +49,7 @@ pub struct CPUState {
 
 #[test]
 fn run_singlesteps() {
-    let str = include_str!("../testfiles/00.json");
+    let str = include_str!("../testfiles/1c.json");
     // let path = Path::new("testfiles/00.json");
     // let mut file = File::open(&path).unwrap();
     // let mut reader = BufReader::new(file);
@@ -45,50 +67,42 @@ fn run_singlesteps() {
     // let data: CPUState = serde_json::from_str(&buf).unwrap();
     // let data: CPUState = serde_json::from_str(&buf).unwrap();
 
-    let first = &data[0];
-     //println!("{:#?}",first);
+    //let first = &data[0];
+    //println!("{:#?}",first);
 
-    let mut cpu = CPU::new(Bus::empty_bus());
-    // cpu.reset();
-    cpu.register_a = first.initial.a;
-    cpu.register_x = first.initial.x;
-    cpu.register_y = first.initial.y;
-    cpu.status = first.initial.p;
-    cpu.program_counter = first.initial.pc;
-    cpu.stack_pointer = first.initial.s;
+    let mut i : i32 = 0;
+    for test_state in &data {
+        println!("Running test {}", i);
+        let mut cpu = CPU::new(Bus::empty_bus());
+        for (addr, data) in &test_state.initial.ram {
+            // println!("addr: {:04X}, data: {:02X}", *addr, *data);
+            cpu.bus.write_mem(*addr, *data);
+        }
+        cpu.program_counter = test_state.initial.pc;
+        // cpu.reset();
+        cpu.register_a = test_state.initial.a;
+        cpu.register_x = test_state.initial.x;
+        cpu.register_y = test_state.initial.y;
+        cpu.status = test_state.initial.p;
+        cpu.stack_pointer = test_state.initial.s;
 
-    println!("Writing to RAM: ");
 
-    for (addr, data) in &first.initial.ram {
-        println!("addr: {:04X}, data: {:02X}", *addr, *data);
-        cpu.bus.write_mem(*addr, *data);
+        cpu.step(|cpu| {
+            println!("{}", trace(cpu));
+        });
+        assert_cpu_eq!(cpu.register_a, test_state.r#final.a, i, "Register a");
+        assert_cpu_eq!(cpu.register_x, test_state.r#final.x, i, "Register x");
+        assert_cpu_eq!(cpu.register_y, test_state.r#final.y, i, "Register y");
+        assert_cpu_eq!(cpu.stack_pointer, test_state.r#final.s, i, "Stack Pointer");
+        assert_cpu_eq!(cpu.status, test_state.r#final.p, i, "Status flag");
+        assert_cpu_eq!(cpu.program_counter, test_state.r#final.pc, i, "PC");
+        // assert_eq!(cpu.register_a, test_state.r#final.a, "Running test {}, expected {}, got {}", i, cpu.register_a, test_state.r#final.a);
+        // assert_eq!(cpu.register_x, test_state.r#final.x);
+        // assert_eq!(cpu.register_y, test_state.r#final.y);
+        // assert_eq!(cpu.stack_pointer, test_state.r#final.s);
+        // assert_eq!(cpu.status, test_state.r#final.p);
+        // assert_eq!(cpu.program_counter, test_state.r#final.pc);
+        i += 1;
     }
 
-    cpu.step(|cpu| {
-        println!("{}", trace(cpu));
-    });
-    assert_eq!(cpu.register_a, first.r#final.a);
-    assert_eq!(cpu.register_x, first.r#final.x);
-    assert_eq!(cpu.register_y, first.r#final.y);
-    assert_eq!(cpu.stack_pointer, first.r#final.s);
-    assert_eq!(cpu.status, first.r#final.p);
-    assert_eq!(cpu.program_counter, first.r#final.pc);
-
-    // 97 = 0110 0001
-    // 101= 0110 0101
-    // assert!(false);
 }
-
-/*
-{ "name": "00 35 26", "initial": 
-{ "pc": 59521, "s": 242, "a": 4, "x": 71, "y": 56, "p": 97, 
-"ram": 
-[ [59521, 0], [59522, 53], [59523, 38], [65534, 21], [65535, 35], [8981, 229]]}, 
-"final": 
-{ "pc": 8981, "s": 239, "a": 4, "x": 71, "y": 56, "p": 101, 
-"ram": [ [496, 113], [497, 131], [498, 232], [8981, 229], [59521, 0], [59522, 53], [59523, 38], [65534, 21], [65535, 35]]}, 
-"cycles": [ [59521, 0, "read"], [59522, 53, "read"], [498, 232, "write"], [497, 131, "write"], [496, 113, "write"], [65534, 21, "read"], [65535, 35, "read"]] 
-},
-{ "name": "00 35 26", "initial": { "pc": 59521, "s": 242, "a": 4, "x": 71, "y": 56, "p": 97, "ram": [ [59521, 0], [59522, 53], [59523, 38], [65534, 21], [65535, 35], [8981, 229]]}, "final": { "pc": 8981, "s": 239, "a": 4, "x": 71, "y": 56, "p": 101, "ram": [ [496, 113], [497, 131], [498, 232], [8981, 229], [59521, 0], [59522, 53], [59523, 38], [65534, 21], [65535, 35]]}, "cycles": [ [59521, 0, "read"], [59522, 53, "read"], [498, 232, "write"], [497, 131, "write"], [496, 113, "write"], [65534, 21, "read"], [65535, 35, "read"]] },
-
-*/

@@ -1074,6 +1074,8 @@ impl<'a> CPU<'a> {
         if program_counter_state == self.program_counter {
             self.program_counter += (opcode.len - 1) as u16;
         }
+
+        callback(self);
     }
 }
 

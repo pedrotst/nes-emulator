@@ -58,4 +58,8 @@ impl PPUCTRL {
     pub fn update(&mut self, data: u8) {
         self.bits = data;
     }
+
+    pub fn read(self) -> u8 {
+        self.bits
+    }
 }

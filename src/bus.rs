@@ -1,7 +1,7 @@
 use crate::cartridge::Mirroring;
-use crate::cpu::Mem;
 use crate::cartridge::Rom;
 use crate::cartridge::mock_rom;
+use crate::cpu::Mem;
 use crate::ppu::*;
 
 //  _______________ $10000  _______________
@@ -35,27 +35,33 @@ use crate::ppu::*;
 const RAM: u16 = 0x0000;
 const RAM_MIRRORS_END: u16 = 0x1FFF;
 const _PPU_REGISTERS: u16 = 0x2000;
-const PPU_REGISTERS_MIRRORS_END: u16 = 0x3FFF;
+const PPU_REGISTERS_MIRRORS_END: u16 = 0x401F;
+const EXPANSION_END: u16 = 0x5FFF;
+const SAVE_RAM_END: u16 = 0x7FFF;
 
 pub struct Bus<'call> {
     cpu_vram: [u8; 2048],
     prg_rom: Vec<u8>,
     ppu: NesPPU,
+    expansion_rom: [u8; 8188],
+    save_ram: [u8; 8192],
 
     pub cycles: usize,
-    gameloop_callback: Box<dyn FnMut(&NesPPU) + 'call>
+    gameloop_callback: Box<dyn FnMut(&NesPPU) + 'call>,
 }
 
 impl<'a> Bus<'a> {
     // Mock Bus
     pub fn empty_bus() -> Self {
-        let ppu = NesPPU::new([].to_vec(), Mirroring::VERTICAL);
+        let ppu = NesPPU::new([0;0x4000].to_vec(), Mirroring::VERTICAL);
         Bus {
             cpu_vram: [0; 2048],
             prg_rom: [0; 0x4000].to_vec(),
-            ppu : ppu,
+            expansion_rom: [0; 8188],
+            save_ram: [0; 8192],
+            ppu: ppu,
             cycles: 0,
-            gameloop_callback: Box::new(|_ : &NesPPU|{}),
+            gameloop_callback: Box::new(|_: &NesPPU| {}),
         }
     }
 
@@ -65,20 +71,24 @@ impl<'a> Bus<'a> {
         Bus {
             cpu_vram: [0; 2048],
             prg_rom: rom.prg_rom,
-            ppu : ppu,
+            expansion_rom: [0; 8188],
+            save_ram: [0; 8192],
+            ppu: ppu,
             cycles: 0,
-            gameloop_callback: Box::new(|_ : &NesPPU|{}),
+            gameloop_callback: Box::new(|_: &NesPPU| {}),
         }
     }
 
-    pub fn new<'call, F>(rom: Rom, gameloop_callback: F) -> Bus<'call> 
+    pub fn new<'call, F>(rom: Rom, gameloop_callback: F) -> Bus<'call>
     where
-        F : FnMut(&NesPPU) + 'call,
+        F: FnMut(&NesPPU) + 'call,
     {
         let ppu = NesPPU::new(rom.chr_rom, rom.screen_mirroring);
         Bus {
             cpu_vram: [0; 2048],
             prg_rom: rom.prg_rom,
+            expansion_rom: [0; 8188],
+            save_ram: [0; 8192],
             ppu: ppu,
             cycles: 0,
             gameloop_callback: Box::from(gameloop_callback),
@@ -121,8 +131,8 @@ impl<'a> Bus<'a> {
 
     pub fn write_mem(&mut self, addr: u16, data: u8) {
         match addr {
-            RAM ..= RAM_MIRRORS_END => {
-                let mirror_down_addr = addr & 0b11111111_11111111;
+            RAM..=RAM_MIRRORS_END => {
+                let mirror_down_addr = addr & 0b00000111_11111111;
                 self.cpu_vram[mirror_down_addr as usize] = data;
             }
             0x2000 => {
@@ -148,13 +158,19 @@ impl<'a> Bus<'a> {
                 self.ppu.write_to_ppu_data(data);
             }
 
-            0x2008 ..= PPU_REGISTERS_MIRRORS_END => {
+            0x2008..=PPU_REGISTERS_MIRRORS_END => {
                 let mirror_down_addr = addr & 0b00100000_00000111;
                 self.mem_write(mirror_down_addr, data);
             }
-            0x8000 ..= 0xFFFF => {
+            0x8000..=0xFFFF => {
                 self.write_prg_rom(addr, data);
                 // panic!("Attempt to write to Cartridge ROM space");
+            }
+            0x4020..=EXPANSION_END => {
+                self.expansion_rom[(addr - 0x4020) as usize] = data;
+            }
+            0x6000..=SAVE_RAM_END => {
+                self.save_ram[(addr - 0x6000) as usize] = data;
             }
             _ => {
                 println!("Ignoring mem write-access at {:#X}", addr);
@@ -165,9 +181,10 @@ impl<'a> Bus<'a> {
 }
 
 impl<'a> Mem for Bus<'a> {
+    /* 
     fn mem_read(&mut self, addr: u16) -> u8 {
         match addr {
-            RAM ..= RAM_MIRRORS_END => {
+            RAM..=RAM_MIRRORS_END => {
                 let mirror_down_addr = addr & 0b0000_0111_1111_1111;
                 self.cpu_vram[mirror_down_addr as usize]
             }
@@ -178,11 +195,51 @@ impl<'a> Mem for Bus<'a> {
             0x2004 => self.ppu.read_oam_data(),
             0x2007 => self.ppu.read_data(),
 
-            0x2008 ..= PPU_REGISTERS_MIRRORS_END => {
+            0x2008..=PPU_REGISTERS_MIRRORS_END => {
                 let mirror_down_addr = addr & 0b0010_0000_0000_0111;
                 self.mem_read(mirror_down_addr)
             }
-            0x8000 ..= 0xFFFF => self.read_prg_rom(addr),
+            0x8000..=0xFFFF => self.read_prg_rom(addr),
+            _ => {
+                println!("Ignoring mem access at {:#X}", addr);
+                0
+            }
+        }
+    } */
+
+    fn mem_read(&mut self, addr: u16) -> u8 {
+        match addr {
+            RAM..=RAM_MIRRORS_END => {
+                let mirror_down_addr = addr & 0b0000_0111_1111_1111;
+                self.cpu_vram[mirror_down_addr as usize]
+            }
+            0x2000 => {
+                self.ppu.read_ctrl()
+            }
+            0x2001 => {
+                self.ppu.read_mask()
+            }
+            0x2003 => {
+                self.ppu.read_oam_addr()
+            }
+            0x2006 => {
+                self.ppu.addr.get_u8()
+            }
+            0x2002 => self.ppu.read_status(),
+            0x2004 => self.ppu.read_oam_data(),
+            0x2007 => self.ppu.read_data(),
+
+            0x2008..=PPU_REGISTERS_MIRRORS_END => {
+                let mirror_down_addr = addr & 0b0010_0000_0000_0111;
+                self.mem_read(mirror_down_addr)
+            }
+            0x8000..=0xFFFF => self.read_prg_rom(addr),
+            0x4020..=EXPANSION_END => {
+                self.expansion_rom[(addr - 0x4020) as usize]
+            }
+            0x6000..=SAVE_RAM_END => {
+                self.save_ram[(addr - 0x6000) as usize]
+            }
             _ => {
                 println!("Ignoring mem access at {:#X}", addr);
                 0
@@ -192,7 +249,7 @@ impl<'a> Mem for Bus<'a> {
 
     fn mem_write(&mut self, addr: u16, data: u8) {
         match addr {
-            RAM ..= RAM_MIRRORS_END => {
+            RAM..=RAM_MIRRORS_END => {
                 let mirror_down_addr = addr & 0b11111111_11111111;
                 self.cpu_vram[mirror_down_addr as usize] = data;
             }
@@ -221,11 +278,11 @@ impl<'a> Mem for Bus<'a> {
                 self.ppu.write_to_ppu_data(data);
             }
 
-            0x2008 ..= PPU_REGISTERS_MIRRORS_END => {
+            0x2008..=PPU_REGISTERS_MIRRORS_END => {
                 let mirror_down_addr = addr & 0b00100000_00000111;
                 self.mem_write(mirror_down_addr, data);
             }
-            0x8000 ..= 0xFFFF => {
+            0x8000..=0xFFFF => {
                 panic!("Attempt to write to Cartridge ROM space");
             }
             _ => {

@@ -90,10 +90,30 @@ impl NesPPU {
         }
     }
 
+    pub fn read_ctrl(&mut self) -> u8 {
+        self.ctrl.bits()
+    }
+
     pub fn nmi_status(self) -> Option<u8> {
         self.nmi_interrupt
     }
 
+    pub fn read_mask(&mut self) -> u8{
+        self.mask.bits()
+    }
+
+    pub fn read_scroll(&mut self) -> u16 {
+        self.scroll.read()
+    }
+
+    pub fn read_oam_addr(&mut self) -> u8 {
+        self.oam_addr
+    }
+
+    pub fn read_oam_data(&mut self) -> u8 {
+        self.oam_data[self.oam_addr as usize]
+    }
+    
     pub fn write_to_mask(&mut self, value: u8) {
         self.mask.update(value);
     }
@@ -110,12 +130,8 @@ impl NesPPU {
         self.oam_addr = value;
     }
 
-    pub fn read_oam_data(&mut self) -> u8 {
-        self.oam_data[self.oam_addr as usize]
-    }
-    
     pub fn read_status(&mut self) -> u8{
-        let data = self.status.data();
+        let data = self.status.bits();
 
         self.status.reset_vblank_status();
         self.scroll.reset_latch();
@@ -220,6 +236,15 @@ impl PPUADDR {
 
     pub fn get(&self) -> u16 {
         ((self.value.0 as u16) << 8) | (self.value.1 as u16)
+    }
+
+    pub fn get_u8(&self) -> u8 {
+        if self.hi_ptr {
+            self.value.0
+        }
+        else {
+            self.value.1
+        }
     }
 
     pub fn update(&mut self, data: u8) {
