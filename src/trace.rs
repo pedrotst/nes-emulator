@@ -8,7 +8,7 @@ const POS_INSTRUCTION_COL : usize = 16;
 const POS_REGISTER_COL : usize = 48;
 
 fn pad(line: &mut String, padding: usize) {
-    line.push_str(&" ".repeat(padding - line.len()));
+    line.push_str(&" ".repeat(padding.saturating_sub(line.len())));
 }
 
 pub fn trace<T: BusOP>(cpu: &mut CPU<T>) -> String {

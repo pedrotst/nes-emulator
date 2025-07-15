@@ -144,15 +144,6 @@ impl<'a> Bus<'a> {
         self.prg_rom[addr as usize]
     }
 
-    fn write_prg_rom(&mut self, mut addr: u16, data: u8) {
-        addr -= 0x8000;
-        if self.prg_rom.len() == 0x4000 && addr >= 0x4000 {
-            // Mirror if needed
-            addr = addr % 0x4000;
-        }
-        self.prg_rom[addr as usize] = data;
-    }
-
 }
 
 impl<'a> Mem for Bus<'a> {
@@ -188,10 +179,6 @@ impl<'a> Mem for Bus<'a> {
             0x8000..=0xFFFF => self.read_prg_rom(addr),
             0x4020..=EXPANSION_END => self.expansion_rom[(addr - 0x4020) as usize],
             0x6000..=SAVE_RAM_END => self.save_ram[(addr - 0x6000) as usize],
-            _ => {
-                println!("Ignoring mem access at {:#X}", addr);
-                0
-            }
         }
     }
 
@@ -243,9 +230,6 @@ impl<'a> Mem for Bus<'a> {
             }
             0x6000..=SAVE_RAM_END => {
                 self.save_ram[(addr - 0x6000) as usize] = data;
-            }
-            _ => {
-                println!("Ignoring mem write-access at {:#X}", addr);
             }
         }
     }
