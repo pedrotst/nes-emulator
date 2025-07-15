@@ -70,13 +70,14 @@ fn run_singlesteps() {
     //let first = &data[0];
     //println!("{:#?}",first);
 
-    let mut i : i32 = 0;
+    let mut i : i32 = 1;
     for test_state in &data {
         println!("Running test {}", i);
+        println!("name: {}",test_state.name);
         let mut cpu = CPU::new(Bus::empty_bus());
         for (addr, data) in &test_state.initial.ram {
-            // println!("addr: {:04X}, data: {:02X}", *addr, *data);
-            cpu.bus.write_mem(*addr, *data);
+            // println!("Writing addr: {:04X}, data: {:02X}", *addr, *data);
+            cpu.bus.direct_write(*addr, *data);
         }
         cpu.program_counter = test_state.initial.pc;
         // cpu.reset();

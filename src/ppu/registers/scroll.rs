@@ -1,6 +1,6 @@
 use crate::ppu::registers::w::WREG;
-use std::rc::Rc;
 use std::cell::RefCell;
+use std::rc::Rc;
 
 pub struct PPUSCROLL {
     scroll_x: u8,
@@ -17,13 +17,25 @@ impl PPUSCROLL {
         }
     }
 
+
+
+    pub fn direct_set(&mut self, data: u8) {
+        self.set_ping(data, true);
+    }
+
     pub fn set(&mut self, data: u8) {
+        self.set_ping(data, true);
+    }
+
+    fn set_ping(&mut self, data: u8, ping: bool) {
         if self.latch_state.borrow().is_set() {
             self.scroll_x = data;
         } else {
             self.scroll_y = data;
         }
-        self.latch_state.borrow_mut().reset();
+        if ping {
+            self.latch_state.borrow_mut().ping();
+        }
     }
 
     pub fn read(&mut self) -> u16 {
@@ -33,8 +45,7 @@ impl PPUSCROLL {
     pub fn get_u8(&mut self) -> u8 {
         if self.latch_state.borrow().is_set() {
             self.scroll_x
-        }
-        else {
+        } else {
             self.scroll_y
         }
     }

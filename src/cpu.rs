@@ -76,6 +76,19 @@ impl Mem for CPU<'_> {
 }
 
 impl<'a> CPU<'a> {
+    pub fn new<'b>(bus: Bus<'b>) -> CPU<'b> {
+        CPU {
+            register_a: 0,
+            register_x: 0,
+            register_y: 0,
+            status: 0b0001_00100,
+            stack_pointer: STACK_RESET,
+            program_counter: 0,
+            // memory: [0; 0xFFFF],
+            bus: bus,
+        }
+    }
+
     pub fn mock_cpu(code: Vec<u8>) -> Self {
         CPU {
             register_a: 0,
@@ -87,6 +100,12 @@ impl<'a> CPU<'a> {
             // memory: [0; 0xFFFF],
             bus: Bus::mock_bus(code),
         }
+    }
+
+    pub fn direct_read_u16(&mut self, pos: u16) -> u16 {
+        let lo = self.bus.direct_read(pos) as u16;
+        let hi = self.bus.direct_read(pos + 1) as u16;
+        (hi << 8) | (lo as u16)
     }
 
     fn get_operand_address(&mut self, mode: &AddressingMode) -> (u16, bool) {
@@ -110,7 +129,9 @@ impl<'a> CPU<'a> {
             }
 
             AddressingMode::Absolute_X => {
+                println!("Reading for AX");
                 let base = self.mem_read_u16(self.program_counter);
+                println!("Finished reading AX");
                 let addr = base.wrapping_add(self.register_x as u16);
                 (addr, page_cross(base, addr))
             }
@@ -158,19 +179,6 @@ impl<'a> CPU<'a> {
             AddressingMode::NoneAddressing => {
                 panic!("mode {:?} is not supported", mode)
             }
-        }
-    }
-
-    pub fn new<'b>(bus: Bus<'b>) -> CPU<'b> {
-        CPU {
-            register_a: 0,
-            register_x: 0,
-            register_y: 0,
-            status: 0b0001_00100,
-            stack_pointer: STACK_RESET,
-            program_counter: 0,
-            // memory: [0; 0xFFFF],
-            bus: bus,
         }
     }
 
@@ -1073,7 +1081,8 @@ impl<'a> CPU<'a> {
             self.program_counter += (opcode.len - 1) as u16;
         }
 
-        callback(self);
+        // println!("Running callback");
+        // callback(self);
     }
 }
 

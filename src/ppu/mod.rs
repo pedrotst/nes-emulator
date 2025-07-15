@@ -5,23 +5,23 @@ use crate::cartridge::Mirroring;
 use registers::address::PPUADDR;
 use registers::control::PPUCTRL;
 use registers::mask::PPUMASK;
-use registers::status::PPUSTATUS;
 use registers::scroll::PPUSCROLL;
+use registers::status::PPUSTATUS;
 use registers::w::WREG;
 
-use std::rc::Rc;
 use std::cell::RefCell;
+use std::rc::Rc;
 
 pub struct NesPPU {
     pub chr_rom: Vec<u8>,
     pub palette_table: [u8; 32],
-    pub vram: [u8; 2048],
+    pub vram: [u8; 7936],
     pub internal_data_buf: u8,
 
-    pub ctrl: PPUCTRL,     // 0x2000
-    pub mask: PPUMASK,     // 0x2001
-    pub status: PPUSTATUS, // 0x2002
-    pub oam_addr: u8,      // 0x2003
+    pub ctrl: PPUCTRL,       // 0x2000
+    pub mask: PPUMASK,       // 0x2001
+    pub status: PPUSTATUS,   // 0x2002
+    pub oam_addr: u8,        // 0x2003
     pub oam_data: [u8; 256], // 0x2004
     // pub oam_data: u8,      // 0x2004
     pub scroll: PPUSCROLL, // 0x2005
@@ -41,7 +41,7 @@ impl NesPPU {
         NesPPU {
             chr_rom: chr_rom,
             mirroring: mirroring,
-            vram: [0; 2048],
+            vram: [0; 7936],
             ctrl: PPUCTRL::new(),
             mask: PPUMASK::new(),
             status: PPUSTATUS::new(),
@@ -81,11 +81,18 @@ impl NesPPU {
         }
 
         return false;
+    }
 
+    pub fn direct_write_to_ppu_addr(&mut self, value: u8) {
+        self.addr.direct_update(value);
     }
 
     pub fn write_to_ppu_addr(&mut self, value: u8) {
         self.addr.update(value);
+    }
+
+    pub fn direct_write_to_ctrl(&mut self, value: u8) {
+        self.ctrl.update(value);
     }
 
     pub fn write_to_ctrl(&mut self, value: u8) {
@@ -104,7 +111,7 @@ impl NesPPU {
         self.nmi_interrupt
     }
 
-    pub fn read_mask(&mut self) -> u8{
+    pub fn read_mask(&mut self) -> u8 {
         self.mask.bits()
     }
 
@@ -119,13 +126,17 @@ impl NesPPU {
     pub fn read_oam_data(&mut self) -> u8 {
         self.oam_data[self.oam_addr as usize]
     }
-    
+
     pub fn write_to_mask(&mut self, value: u8) {
         self.mask.update(value);
     }
 
     pub fn write_to_status(&mut self, value: u8) {
         self.status.update(value);
+    }
+
+    pub fn direct_write_to_scroll(&mut self, value: u8) {
+        self.scroll.direct_set(value);
     }
 
     pub fn write_to_scroll(&mut self, value: u8) {
@@ -136,7 +147,12 @@ impl NesPPU {
         self.oam_addr = value;
     }
 
-    pub fn read_status(&mut self) -> u8{
+    pub fn direct_read_status(&mut self) -> u8 {
+        let data = self.status.bits();
+        data
+    }
+
+    pub fn read_status(&mut self) -> u8 {
         let data = self.status.bits();
 
         self.status.reset_vblank_status();
@@ -147,6 +163,10 @@ impl NesPPU {
     pub fn write_to_oam_data(&mut self, value: u8) {
         self.oam_data[self.oam_addr as usize] = value;
         self.oam_addr = self.oam_addr.wrapping_add(1);
+    }
+
+    pub fn direct_write_to_oam_data(&mut self, value: u8) {
+        self.oam_data[self.oam_addr as usize] = value;
     }
 
     fn increment_vram_addr(&mut self) {
@@ -161,9 +181,14 @@ impl NesPPU {
     //   [ A ] [ B ]
     //   [ a ] [ b ]
     pub fn mirror_vram_addr(&self, addr: u16) -> u16 {
-        let mirrored_vram = addr & 0b1011_1111_1111_1111; // mirror down 0x3000-0x3eff to 0x2000-0x2eff
+        println!("vram_addr: {}", addr);
+        let mirrored_vram = addr & 0b0011_1111_1111_1111; // mirror down 0x3000-0x3eff to 0x2000-0x2eff
+        println!("mirrored_addr: {}", addr);
+        dbg!(&self.mirroring);
         let vram_index = mirrored_vram - 0x200; // to vram vector
+        dbg!(vram_index);
         let name_table = vram_index / 0x400; // to the name table index
+        dbg!(name_table);
         match (&self.mirroring, name_table) {
             (Mirroring::VERTICAL, 2) | (Mirroring::VERTICAL, 3) => vram_index - 0x800,
             (Mirroring::HORIZONTAL, 2) => vram_index - 0x400,
@@ -174,8 +199,14 @@ impl NesPPU {
     }
 
     pub fn read_data(&mut self) -> u8 {
+        self.read_data_with_inc(true)
+    }
+
+    pub fn read_data_with_inc(&mut self, with_inc: bool) -> u8 {
         let addr = self.addr.get();
-        self.increment_vram_addr();
+        if with_inc {
+            self.increment_vram_addr();
+        }
 
         match addr {
             0..=0x1fff => {
@@ -183,19 +214,27 @@ impl NesPPU {
                 self.internal_data_buf = self.chr_rom[addr as usize];
                 result
             }
-            0x2000..=0x2fff => {
+            // 0x2000..=0x2fff => {
+            0x2000..=0x3eff => {
                 let result = self.internal_data_buf;
                 self.internal_data_buf = self.vram[self.mirror_vram_addr(addr) as usize];
                 result
             }
-            0x3000..=0x3eff => panic!("addr space 0x3000..0x3eff is not expected to be used"),
+            // 0x3000..=0x3eff => panic!("addr space 0x3000..0x3eff is not expected to be used"),
             0x3f00..=0x3fff => self.palette_table[(addr - 0x3f00) as usize],
             _ => panic!("unexpected access to mirrored space {}", addr),
         }
     }
+
     pub fn write_to_ppu_data(&mut self, data: u8) {
+        self.write_to_ppu_data_with_inc(data, true);
+    }
+    
+    pub fn write_to_ppu_data_with_inc(&mut self, data: u8, with_inc: bool) {
         let addr = self.addr.get();
-        self.increment_vram_addr();
+        if with_inc {
+            self.increment_vram_addr();
+        }
 
         match addr {
             0..=0x1fff => {
@@ -204,12 +243,12 @@ impl NesPPU {
             0x2000..=0x2fff => {
                 self.vram[self.mirror_vram_addr(addr) as usize] = data;
             }
+            0x3000..=0x3eff => panic!("addr space 0x3000..0x3eff is not expected to be used"),
             //Addresses $3F10/$3F14/$3F18/$3F1C are mirrors of $3F00/$3F04/$3F08/$3F0C
             0x3f10 | 0x3f14 | 0x3f18 | 0x3f1c => {
                 let add_mirror = addr - 0x10;
                 self.palette_table[(add_mirror - 0x3f00) as usize] = data;
             }
-            0x3000..=0x3eff => panic!("addr space 0x3000..0x3eff is not expected to be used"),
             0x3f00..=0x3fff => {
                 self.palette_table[(addr - 0x3f00) as usize] = data;
             }

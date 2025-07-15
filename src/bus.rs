@@ -128,6 +128,116 @@ impl<'a> Bus<'a> {
         }
         self.prg_rom[addr as usize] = data;
     }
+
+    pub fn direct_write(&mut self, addr: u16, data: u8) {
+        match addr {
+            RAM..=RAM_MIRRORS_END => {
+                let mirror_down_addr = addr & 0b00000111_11111111;
+                println!("Writing: 0x{:04X}({}) -> 0x{:04X}({}): 0x{:02X}({})", addr, addr, mirror_down_addr, mirror_down_addr, data, data);
+                self.cpu_vram[mirror_down_addr as usize] = data;
+            }
+            0x2000 => {
+                self.ppu.write_to_ctrl(data);
+            }
+            0x2001 => {
+                self.ppu.write_to_mask(data);
+            }
+            0x2002 => {
+                self.ppu.write_to_status(data);
+                // panic!("Attempt to write to PPU status register!");
+            }
+            0x2003 => {
+                self.ppu.write_to_oam_addr(data);
+            }
+            0x2004 => {
+                println!("Writing oam data 0x2004(8196): 0x{:02X}", data);
+                self.ppu.direct_write_to_oam_data(data);
+            }
+            0x2005 => {
+                self.ppu.direct_write_to_scroll(data);
+            }
+            0x2006 => {
+                self.ppu.direct_write_to_ppu_addr(data);
+            }
+            0x2007 => {
+                self.ppu.write_to_ppu_data_with_inc(data, false);
+            }
+
+            0x2008..=PPU_REGISTERS_MIRRORS_END => {
+                let mirror_down_addr = addr & 0b00100000_00000111;
+                println!("Writing: 0x{:04X}({}) -> 0x{:04X}({}): 0x{:02X}({})", addr, addr, mirror_down_addr, mirror_down_addr, data, data);
+                self.direct_write(mirror_down_addr, data);
+            }
+            0x8000..=0xFFFF => {
+                self.write_prg_rom(addr, data);
+                // panic!("Attempt to write to Cartridge ROM space");
+            }
+            0x4020..=EXPANSION_END => {
+                self.expansion_rom[(addr - 0x4020) as usize] = data;
+            }
+            0x6000..=SAVE_RAM_END => {
+                self.save_ram[(addr - 0x6000) as usize] = data;
+            }
+            _ => {
+                println!("Ignoring mem write-access at {:#X}", addr);
+            }
+        }
+    }
+
+    pub fn direct_read(&mut self, addr: u16) -> u8 {
+        match addr {
+            RAM..=RAM_MIRRORS_END => {
+                let mirror_down_addr = addr & 0b0000_0111_1111_1111;
+                let data = self.cpu_vram[mirror_down_addr as usize];
+                println!("Reading: 0x{:04X}({}) -> 0x{:04X}({}): 0x{:02X}({})", addr, addr, mirror_down_addr, mirror_down_addr, data, data);
+                data
+            }
+            0x2000 => {
+                self.ppu.read_ctrl()
+            }
+            0x2002 => {
+                self.ppu.direct_read_status()
+            }
+            0x2001 => {
+                self.ppu.read_mask()
+            }
+            0x2003 => {
+                self.ppu.read_oam_addr()
+            }
+            0x2004 => {
+                let data = self.ppu.read_oam_data();
+                println!("Reading oam data 0x2004(8196): 0x{:02X}", data);
+                data
+            }
+            0x2005 => {
+                self.ppu.read_scroll()
+            }
+            0x2006 => {
+                self.ppu.addr.get_u8()
+            }
+            0x2007 => {
+                self.ppu.read_data_with_inc(false)
+            }
+
+            0x2008..=PPU_REGISTERS_MIRRORS_END => {
+                let mirror_down_addr = addr & 0b0010_0000_0000_0111;
+                let data = self.direct_read(mirror_down_addr);
+                println!("Reading: 0x{:04X}({}) -> 0x{:04X}({}): 0x{:02X}({})", addr, addr, mirror_down_addr, mirror_down_addr, data, data);
+                data
+            }
+            0x8000..=0xFFFF => self.read_prg_rom(addr),
+            0x4020..=EXPANSION_END => {
+                self.expansion_rom[(addr - 0x4020) as usize]
+            }
+            0x6000..=SAVE_RAM_END => {
+                self.save_ram[(addr - 0x6000) as usize]
+            }
+            _ => {
+                println!("Ignoring mem access at {:#X}", addr);
+                0
+            }
+        }
+    }
 }
 
 impl<'a> Mem for Bus<'a> {
@@ -135,7 +245,7 @@ impl<'a> Mem for Bus<'a> {
         match addr {
             RAM..=RAM_MIRRORS_END => {
                 let mirror_down_addr = addr & 0b0000_0111_1111_1111;
-                println!("Reading: {} -> {}", addr, mirror_down_addr);
+                println!("Reading: {:4X} -> {:4X}", addr, mirror_down_addr);
                 self.cpu_vram[mirror_down_addr as usize]
             }
             0x2000 => {
@@ -151,7 +261,9 @@ impl<'a> Mem for Bus<'a> {
                 self.ppu.read_oam_addr()
             }
             0x2004 => {
-                self.ppu.read_oam_data()
+                let data = self.ppu.read_oam_data();
+                println!("Reading oam data 0x2004(8196): 0x{:02X}", data);
+                data
             }
             0x2005 => {
                 self.ppu.read_scroll()
@@ -187,7 +299,7 @@ impl<'a> Mem for Bus<'a> {
         match addr {
             RAM..=RAM_MIRRORS_END => {
                 let mirror_down_addr = addr & 0b00000111_11111111;
-                println!("Writing: {} -> {}", addr, mirror_down_addr);
+                // println!("Writing: {} -> {}", addr, mirror_down_addr);
                 self.cpu_vram[mirror_down_addr as usize] = data;
             }
             0x2000 => {
@@ -218,7 +330,7 @@ impl<'a> Mem for Bus<'a> {
 
             0x2008..=PPU_REGISTERS_MIRRORS_END => {
                 let mirror_down_addr = addr & 0b00100000_00000111;
-                println!("Writing: {:04X} -> {:04X}: {:02X}", addr, mirror_down_addr, data);
+                // println!("Writing: {:04X} -> {:04X}: {:02X}", addr, mirror_down_addr, data);
                 self.mem_write(mirror_down_addr, data);
             }
             0x8000..=0xFFFF => {
