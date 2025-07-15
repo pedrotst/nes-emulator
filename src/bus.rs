@@ -137,7 +137,7 @@ impl<'a> Bus<'a> {
                 self.cpu_vram[mirror_down_addr as usize] = data;
             }
             0x2000 => {
-                self.ppu.write_to_ctrl(data);
+                self.ppu.direct_write_to_ctrl(data);
             }
             0x2001 => {
                 self.ppu.write_to_mask(data);

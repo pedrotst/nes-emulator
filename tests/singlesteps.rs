@@ -88,9 +88,11 @@ fn run_singlesteps() {
         cpu.stack_pointer = test_state.initial.s;
 
 
+        println!("Started step");
         cpu.step(|cpu| {
             println!("{}", trace(cpu));
         });
+        println!("Finished step");
         assert_cpu_eq!(cpu.register_a, test_state.r#final.a, i, "Register a");
         assert_cpu_eq!(cpu.register_x, test_state.r#final.x, i, "Register x");
         assert_cpu_eq!(cpu.register_y, test_state.r#final.y, i, "Register y");

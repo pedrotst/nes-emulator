@@ -792,8 +792,13 @@ impl<'a> CPU<'a> {
     {
         let ref opcodes: HashMap<u8, &'static opcodes::OpCode> = *opcodes::OPCODES_MAP;
         if let Some(_nmi) = self.bus.poll_nmi_status() {
+            println!("Interrupting NMI");
             self.interrupt_nmi();
+            println!("Finished NMI");
         }
+        println!("Started tracing");
+        callback(self);
+        println!("Finished tracing");
         callback(self);
         let code = self.mem_read(self.program_counter);
         self.program_counter += 1;
