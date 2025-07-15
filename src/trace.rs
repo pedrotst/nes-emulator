@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use crate::bus::BusOP;
 use crate::cpu::{AddressingMode, CPU, Mem};
 use crate::opcodes;
 
@@ -10,9 +11,9 @@ fn pad(line: &mut String, padding: usize) {
     line.push_str(&" ".repeat(padding - line.len()));
 }
 
-pub fn trace(cpu: &mut CPU) -> String {
+pub fn trace<T: BusOP>(cpu: &mut CPU<T>) -> String {
     let ref opcodes: HashMap<u8, &'static opcodes::OpCode> = *opcodes::OPCODES_MAP;
-    let code = cpu.bus.direct_read(cpu.program_counter);
+    let code = cpu.mem_read(cpu.program_counter);
 
     let opcode = opcodes
         .get(&code)
@@ -24,7 +25,7 @@ pub fn trace(cpu: &mut CPU) -> String {
     let mut codes: Vec<u8> = Vec::new();
 
     for i in 0..=opcode.len - 1 {
-        let code = cpu.bus.direct_read(cpu.program_counter + i as u16);
+        let code = cpu.mem_read(cpu.program_counter + i as u16);
         line.push_str(&format!("{:02X} ", code));
         codes.push(code);
     }
@@ -48,7 +49,7 @@ pub fn trace(cpu: &mut CPU) -> String {
         AddressingMode::ZeroPage => {
             line.push_str(&format!("${:02X} ", codes[1]));
 
-            let val = cpu.bus.direct_read(codes[1] as u16);
+            let val = cpu.mem_read(codes[1] as u16);
             line.push_str(&format!("= {:02X} ", val));
         }
         AddressingMode::Relative => {
@@ -62,7 +63,7 @@ pub fn trace(cpu: &mut CPU) -> String {
             line.push_str(&format!("${:02X},X @ ", codes[1]));
 
             let pos = codes[1].wrapping_add(cpu.register_x);
-            let val = cpu.bus.direct_read(pos as u16);
+            let val = cpu.mem_read(pos as u16);
 
             line.push_str(&format!("{:02X} = {:02X}", pos, val))
         }
@@ -70,7 +71,7 @@ pub fn trace(cpu: &mut CPU) -> String {
             line.push_str(&format!("${:02X},Y @ ", codes[1]));
 
             let pos = codes[1].wrapping_add(cpu.register_y);
-            let val = cpu.bus.direct_read(pos as u16);
+            let val = cpu.mem_read(pos as u16);
 
             line.push_str(&format!("{:02X} = {:02X}", pos, val))
         }
@@ -78,7 +79,7 @@ pub fn trace(cpu: &mut CPU) -> String {
             line.push_str(&format!("${:02X}{:02X}", codes[2], codes[1]));
             if code != 0x4C && code != 0x20 {
                 let addr = (codes[2] as u16) << 8 | (codes[1] as u16);
-                let val = cpu.bus.direct_read(addr);
+                let val = cpu.mem_read(addr);
                 line.push_str(&format!(" = {:02X}", val));
             }
         }
@@ -86,7 +87,7 @@ pub fn trace(cpu: &mut CPU) -> String {
             let base = (codes[2] as u16) << 8 | (codes[1] as u16);
             line.push_str(&format!("${:04X},X @ ", base));
             let addr = base.wrapping_add(cpu.register_x as u16);
-            let val = cpu.bus.direct_read(addr);
+            let val = cpu.mem_read(addr);
 
             line.push_str(&format!("{:04X} = {:02X}", addr, val))
         }
@@ -95,7 +96,7 @@ pub fn trace(cpu: &mut CPU) -> String {
             line.push_str(&format!("${:04X},Y @ ", base));
 
             let addr = base.wrapping_add(cpu.register_y as u16);
-            let val = cpu.bus.direct_read(addr);
+            let val = cpu.mem_read(addr);
 
             line.push_str(&format!("{:04X} = {:02X}", addr, val))
         }
@@ -105,10 +106,10 @@ pub fn trace(cpu: &mut CPU) -> String {
 
                 let base = codes[1];
                 let ptr = base.wrapping_add(cpu.register_x);
-                let lo = cpu.bus.direct_read(ptr as u16);
-                let hi = cpu.bus.direct_read(ptr.wrapping_add(1) as u16);
+                let lo = cpu.mem_read(ptr as u16);
+                let hi = cpu.mem_read(ptr.wrapping_add(1) as u16);
                 let pos = (hi as u16) << 8 | (lo as u16);
-                let val = cpu.direct_read_u16(pos);
+                let val = cpu.mem_read_u16(pos);
 
                 line.push_str(&format!("{:02X} = {:04X} = {:02X}    ", ptr, pos, val))
             } 
@@ -117,11 +118,11 @@ pub fn trace(cpu: &mut CPU) -> String {
         AddressingMode::Indirect_Y => {
             line.push_str(&format!("(${:02X}),Y ", codes[1]));
 
-            let lo = cpu.bus.direct_read(codes[1] as u16);
-            let hi = cpu.bus.direct_read(codes[1].wrapping_add(1) as u16);
+            let lo = cpu.mem_read(codes[1] as u16);
+            let hi = cpu.mem_read(codes[1].wrapping_add(1) as u16);
             let deref_base = (hi as u16) << 8 | (lo as u16);
             let deref = deref_base.wrapping_add(cpu.register_y as u16);
-            let val = cpu.direct_read_u16(deref);
+            let val = cpu.mem_read_u16(deref);
 
             line.push_str(&format!(
                 "= {:04X} @ {:04X} = {:02X}",
@@ -134,11 +135,11 @@ pub fn trace(cpu: &mut CPU) -> String {
 
                 /* Implements the page bug of the jump */
             let val = if addr & 0x00FF == 0x00FF {
-                    let lo = cpu.bus.direct_read(addr);
-                    let hi = cpu.bus.direct_read(addr & 0xFF00);
+                    let lo = cpu.mem_read(addr);
+                    let hi = cpu.mem_read(addr & 0xFF00);
                     (hi as u16) << 8 | (lo as u16)
                 } else {
-                    cpu.direct_read_u16(addr)
+                    cpu.mem_read_u16(addr)
                 };
 
             line.push_str(&format!("(${:04X}) = {:04X}", addr,val))
@@ -150,7 +151,7 @@ pub fn trace(cpu: &mut CPU) -> String {
 
     line.push_str(&format!(
         "A:{:02X} X:{:02X} Y:{:02X} P:{:02X} SP:{:02X} CYC:{}",
-        cpu.register_a, cpu.register_x, cpu.register_y, cpu.status, cpu.stack_pointer, cpu.bus.cycles
+        cpu.register_a, cpu.register_x, cpu.register_y, cpu.status, cpu.stack_pointer, cpu.bus.cycles()
     ));
 
     line

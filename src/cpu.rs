@@ -1,4 +1,5 @@
 use crate::bus::Bus;
+use crate::bus::BusOP;
 use crate::byte_utils;
 use crate::opcodes;
 
@@ -24,7 +25,7 @@ pub enum AddressingMode {
 
 const STACK_RESET: u8 = 0xFD;
 
-pub struct CPU<'a> {
+pub struct CPU<T: BusOP> {
     pub register_a: u8,
     pub register_x: u8,
     pub register_y: u8,
@@ -32,7 +33,7 @@ pub struct CPU<'a> {
     pub stack_pointer: u8,
     pub program_counter: u16,
     // memory: [u8; 0xFFFF],
-    pub bus: Bus<'a>,
+    pub bus: T,
 }
 
 pub trait Mem {
@@ -57,7 +58,7 @@ fn page_cross(lhs: u16, rhs: u16) -> bool {
     (lhs & 0xFF00) != (rhs & 0xFF00)
 }
 
-impl Mem for CPU<'_> {
+impl<T: BusOP> Mem for CPU<T> {
     fn mem_read(&mut self, addr: u16) -> u8 {
         self.bus.mem_read(addr)
     }
@@ -75,8 +76,8 @@ impl Mem for CPU<'_> {
     }
 }
 
-impl<'a> CPU<'a> {
-    pub fn new<'b>(bus: Bus<'b>) -> CPU<'b> {
+impl<T: BusOP> CPU<T> {
+    pub fn new(bus: T) -> CPU<T> {
         CPU {
             register_a: 0,
             register_x: 0,
@@ -89,6 +90,7 @@ impl<'a> CPU<'a> {
         }
     }
 
+    /*
     pub fn mock_cpu(code: Vec<u8>) -> Self {
         CPU {
             register_a: 0,
@@ -100,13 +102,14 @@ impl<'a> CPU<'a> {
             // memory: [0; 0xFFFF],
             bus: Bus::mock_bus(code),
         }
-    }
+    }*/
 
+    /*
     pub fn direct_read_u16(&mut self, pos: u16) -> u16 {
         let lo = self.bus.direct_read(pos) as u16;
         let hi = self.bus.direct_read(pos + 1) as u16;
         (hi << 8) | (lo as u16)
-    }
+    }*/
 
     fn get_operand_address(&mut self, mode: &AddressingMode) -> (u16, bool) {
         match mode {
@@ -779,7 +782,7 @@ impl<'a> CPU<'a> {
 
     pub fn run_with_callback<F>(&mut self, mut callback: F)
     where
-        F: FnMut(&mut CPU),
+        F: FnMut(&mut CPU<T>),
     {
         loop {
             self.step(&mut callback);
@@ -788,7 +791,7 @@ impl<'a> CPU<'a> {
 
     pub fn step<F>(&mut self, mut callback: F)
     where
-        F: FnMut(&mut CPU),
+        F: FnMut(&mut CPU<T>),
     {
         let ref opcodes: HashMap<u8, &'static opcodes::OpCode> = *opcodes::OPCODES_MAP;
         if let Some(_nmi) = self.bus.poll_nmi_status() {

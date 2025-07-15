@@ -7,6 +7,7 @@ pub mod ppu;
 pub mod trace;
 pub mod render;
 
+use bus::BusOP;
 use cartridge::Rom;
 use cpu::CPU;
 use cpu::Mem;
@@ -139,7 +140,7 @@ fn main() {
 }
 
 #[allow(dead_code)]
-fn handle_user_input(cpu: &mut CPU, event_pump: &mut EventPump) {
+fn handle_user_input<T: BusOP>(cpu: &mut CPU<T>, event_pump: &mut EventPump) {
     for event in event_pump.poll_iter() {
         match event {
             Event::Quit { .. }
@@ -214,7 +215,7 @@ fn color(byte: u8) -> Color {
 }
 
 #[allow(dead_code)]
-fn read_screen_state(mut cpu: CPU, frame: &mut [u8; 32 * 3 * 32]) -> bool {
+fn read_screen_state<T: BusOP>(mut cpu: CPU<T>, frame: &mut [u8; 32 * 3 * 32]) -> bool {
     let mut frame_idx = 0;
     let mut update = false;
     for i in 0x0200..0x600 {
