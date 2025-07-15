@@ -8,10 +8,11 @@ use nes_emulator::trace::trace;
 use serde::Deserialize;
 
 macro_rules! assert_cpu_eq {
-    ($left:expr, $right:expr, $test_id:expr, $field_name:expr) => {
+    ($left:expr, $right:expr, $path:expr, $test_id:expr, $field_name:expr) => {
         assert_eq!(
             $left, $right,
-            "Test {} failed: {} mismatch — got {}, expected {}",
+            "path: {}\n Test {} failed: {} mismatch — got {}, expected {}",
+            $path,
             $test_id, $field_name, $left, $right
         );
     };
@@ -77,8 +78,8 @@ pub struct CPUState {
 fn run_singlesteps() {
     for entry in fs::read_dir("/Users/pedroabreu/gitprojects/65x02/nes6502/v1").unwrap() {
         let path = entry.unwrap().path();
-        println!("\n***************************************************\n");
-        println!("Running File {}", path.to_str().unwrap());
+        // println!("\n***************************************************\n");
+        // println!("Running File {}", path.to_str().unwrap());
 
         let mut file = fs::File::open(&path).unwrap();
         let mut contents = String::new();
@@ -87,10 +88,11 @@ fn run_singlesteps() {
 
         let mut i: i32 = 1;
         for test_state in &data {
-            println!("\n==============================");
-            println!("Running File {}", path.to_str().unwrap());
-            println!("Running test {}", i);
-            println!("name: {}", test_state.name);
+            // println!("\n==============================");
+            // println!("Running File {}", path.to_str().unwrap());
+            // println!("Running test {}", i);
+            // println!("name: {}", test_state.name);
+            let str_path = path.to_str().unwrap();
             let mut cpu = CPU::new(SimpleMem::new());
             for (addr, data) in &test_state.initial.ram {
                 // println!("Writing addr: {:04X}, data: {:02X}", *addr, *data);
@@ -104,26 +106,26 @@ fn run_singlesteps() {
             cpu.status = test_state.initial.p;
             cpu.stack_pointer = test_state.initial.s;
 
-            println!("Started step");
+            // println!("Started step");
             cpu.step(|cpu| {
-                println!("{}", trace(cpu));
+                // println!("{}", trace(cpu));
             });
-            println!("Finished step");
-            assert_cpu_eq!(cpu.register_a, test_state.r#final.a, i, "Register a");
-            assert_cpu_eq!(cpu.register_x, test_state.r#final.x, i, "Register x");
-            assert_cpu_eq!(cpu.register_y, test_state.r#final.y, i, "Register y");
-            assert_cpu_eq!(cpu.stack_pointer, test_state.r#final.s, i, "Stack Pointer");
-            assert_cpu_eq!(cpu.status, test_state.r#final.p, i, "Status flag");
-            assert_cpu_eq!(cpu.program_counter, test_state.r#final.pc, i, "PC");
-            assert_cpu_eq!(cpu.bus.cycles(), test_state.cycles.len(), i, "cycles");
+            // println!("Finished step");
+            assert_cpu_eq!(cpu.register_a, test_state.r#final.a, str_path, i, "Register a");
+            assert_cpu_eq!(cpu.register_x, test_state.r#final.x, str_path, i, "Register x");
+            assert_cpu_eq!(cpu.register_y, test_state.r#final.y, str_path, i, "Register y");
+            assert_cpu_eq!(cpu.stack_pointer, test_state.r#final.s, str_path, i, "Stack Pointer");
+            assert_cpu_eq!(cpu.status, test_state.r#final.p, str_path, i, "Status flag");
+            assert_cpu_eq!(cpu.program_counter, test_state.r#final.pc, str_path, i, "PC");
+            assert_cpu_eq!(cpu.bus.cycles(), test_state.cycles.len(), str_path, i, "cycles");
 
             for (addr, data) in &test_state.r#final.ram {
                 // println!("Writing addr: {:04X}, data: {:02X}", *addr, *data);
                 let my_data = cpu.mem_read(*addr);
                 assert_eq!(
                     my_data, *data,
-                    "RAM @ 0x{0:04X}({0}) = {1:02X}({1}), but should be {2:02X}({2})",
-                    *addr, my_data, *data
+                    "path: {0}\n Test: {4}, RAM @ 0x{1:04X}({1}) = {2:02X}({2}), but should be {3:02X}({3})",
+                    str_path, *addr, my_data, *data, i
                 );
             }
 
@@ -134,9 +136,10 @@ fn run_singlesteps() {
 
 #[test]
 fn run_a_singlestep() {
-    let contents = include_str!("/Users/pedroabreu/gitprojects/65x02/nes6502/v1/bb.json");
+    let contents = include_str!("/Users/pedroabreu/gitprojects/65x02/nes6502/v1/00.json");
     let data: Vec<CPUState> = serde_json::from_str(&contents).unwrap();
 
+    let str_path = "";
     let i: i32 = 0;
     let test_state = &data[i as usize];
     println!("\n==============================");
@@ -162,16 +165,20 @@ fn run_a_singlestep() {
         println!("{}", trace(cpu));
     });
     println!("Finished step");
-    assert_cpu_eq!(cpu.register_a, test_state.r#final.a, i, "Register a");
-    assert_cpu_eq!(cpu.register_x, test_state.r#final.x, i, "Register x");
-    assert_cpu_eq!(cpu.register_y, test_state.r#final.y, i, "Register y");
-    assert_cpu_eq!(cpu.stack_pointer, test_state.r#final.s, i, "Stack Pointer");
-    assert_cpu_eq!(cpu.status, test_state.r#final.p, i, "Status flag");
-    assert_cpu_eq!(cpu.program_counter, test_state.r#final.pc, i, "PC");
-    assert_cpu_eq!(cpu.bus.cycles(), test_state.cycles.len(), i, "cycles");
+            assert_cpu_eq!(cpu.register_a, test_state.r#final.a, str_path, i, "Register a");
+            assert_cpu_eq!(cpu.register_x, test_state.r#final.x, str_path, i, "Register x");
+            assert_cpu_eq!(cpu.register_y, test_state.r#final.y, str_path, i, "Register y");
+            assert_cpu_eq!(cpu.stack_pointer, test_state.r#final.s, str_path, i, "Stack Pointer");
+            assert_cpu_eq!(cpu.status, test_state.r#final.p, str_path, i, "Status flag");
+            assert_cpu_eq!(cpu.program_counter, test_state.r#final.pc, str_path, i, "PC");
+            assert_cpu_eq!(cpu.bus.cycles(), test_state.cycles.len(), str_path, i, "cycles");
 
     for (addr, data) in &test_state.r#final.ram {
         let my_data = cpu.mem_read(*addr);
+
+        println!("RAM @ 0x{0:04X}({0}) = {1:02X}({1}), should be {2:02X}({2})",
+            *addr, my_data, *data);
+
         assert_eq!(
             my_data, *data,
             "RAM @ 0x{0:04X}({0}) = {1:02X}({1}), but should be {2:02X}({2})",

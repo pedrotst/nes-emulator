@@ -25,7 +25,7 @@ pub fn trace<T: BusOP>(cpu: &mut CPU<T>) -> String {
     let mut codes: Vec<u8> = Vec::new();
 
     for i in 0..=opcode.len - 1 {
-        let code = cpu.mem_read(cpu.program_counter + i as u16);
+        let code = cpu.mem_read(cpu.program_counter.wrapping_add(i.into()) as u16);
         line.push_str(&format!("{:02X} ", code));
         codes.push(code);
     }

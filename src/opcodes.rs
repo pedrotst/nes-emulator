@@ -147,6 +147,11 @@ lazy_static! {
         OpCode::new_unofficial(0x8F, "SAX", 3, 4, AddressingMode::Absolute),
         OpCode::new_unofficial(0x97, "SAX", 2, 4, AddressingMode::ZeroPage_Y),
 
+        OpCode::new_unofficial(0x9F, "AHX", 3, 5, AddressingMode::Absolute_X),
+        OpCode::new_unofficial(0x93, "AHX", 2, 5, AddressingMode::Indirect_Y),
+        OpCode::new_unofficial(0x9C, "SHY", 3, 5, AddressingMode::Absolute_X),
+        OpCode::new_unofficial(0x9E, "SHX", 3, 5, AddressingMode::Absolute_Y),
+
         OpCode::new(0x84, "STY", 2, 3, AddressingMode::ZeroPage),
         OpCode::new(0x94, "STY", 2, 4, AddressingMode::ZeroPage_X),
         OpCode::new(0x8C, "STY", 3, 4, AddressingMode::Absolute),

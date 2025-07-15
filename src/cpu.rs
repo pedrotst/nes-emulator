@@ -131,9 +131,7 @@ impl<T: BusOP> CPU<T> {
             }
 
             AddressingMode::Absolute_X => {
-                println!("Reading for AX");
                 let base = self.mem_read_u16(self.program_counter);
-                println!("Finished reading AX");
                 let addr = base.wrapping_add(self.register_x as u16);
                 (addr, page_cross(base, addr))
             }
@@ -223,7 +221,7 @@ impl<T: BusOP> CPU<T> {
         let hi = 0x01;
         let addr = (hi << 8) | self.stack_pointer as u16;
         self.mem_write(addr, data);
-        self.stack_pointer -= 1;
+        self.stack_pointer = self.stack_pointer.wrapping_sub(1);
     }
 
     pub fn pop_stack_u16(&mut self) -> u16 {
@@ -691,6 +689,33 @@ impl<T: BusOP> CPU<T> {
         self.adc_sbc(&mode, true);
     }
 
+    fn ahx(&mut self, mode: &AddressingMode) {
+        let (addr, _page_cross) = self.get_operand_address(mode);
+        let value = self.register_a & self.register_x & ((addr >> 8) as u8);
+        self.mem_write(addr, value);
+    }
+
+    fn shy(&mut self, mode: &AddressingMode) {
+        let base = self.mem_read_u16(self.program_counter);
+        // let addr = base.wrapping_add(self.register_x as u16);
+
+        // let (addr, _page_cross) = self.get_operand_address(mode);
+        let saddr = (base >> 8) as u8;
+        let value = self.register_y & (saddr + 1);
+        let mut addr: u16 = ((base & 0x00ff) + self.register_x as u16) & 0xff;
+        addr |= (value as u16) << 8;
+
+        println!("SHY ({:02X} & {:02X} = {:02X}) writing to {:04X} = {}", saddr, self.register_y, value, addr, value);
+        self.mem_write(addr, value);
+
+    }
+
+    fn shx(&mut self, mode: &AddressingMode) {
+        let (addr, _page_cross) = self.get_operand_address(mode);
+        let value = self.register_x & ((addr >> 8) as u8);
+        self.mem_write(addr, value);
+    }
+
     fn dcp(&mut self, mode: &AddressingMode) {
         let (addr, page_cross) = self.get_operand_address(mode);
         let value = self.mem_read(addr);
@@ -809,13 +834,13 @@ impl<T: BusOP> CPU<T> {
     {
         let ref opcodes: HashMap<u8, &'static opcodes::OpCode> = *opcodes::OPCODES_MAP;
         if let Some(_nmi) = self.bus.poll_nmi_status() {
-            println!("Interrupting NMI");
+            // println!("Interrupting NMI");
             self.interrupt_nmi();
-            println!("Finished NMI");
+            // println!("Finished NMI");
         }
-        println!("Started tracing");
+        // println!("Started tracing");
         callback(self);
-        println!("Finished tracing");
+        // println!("Finished tracing");
         let code = self.mem_read(self.program_counter);
         self.program_counter += 1;
         let program_counter_state = self.program_counter;
@@ -824,7 +849,7 @@ impl<T: BusOP> CPU<T> {
             .get(&code)
             .expect(&format!("OpCode {:x} is not recognized", code));
 
-        println!("Running CPU");
+        // println!("Running CPU");
         match opcode.mneumonic {
             "LDA" => {
                 self.lda(&opcode.mode);
@@ -1084,6 +1109,18 @@ impl<T: BusOP> CPU<T> {
                 self.isb(&opcode.mode);
             }
 
+            "AHX" => {
+                self.ahx(&opcode.mode);
+            }
+
+            "SHY" => {
+                self.shy(&opcode.mode);
+            }
+
+            "SHX" => {
+                self.shx(&opcode.mode);
+            }
+
             "NOP" => {
                 if opcode.len == 3 {
                     let (_, page_cross) = self.get_operand_address(&opcode.mode);
@@ -1104,7 +1141,7 @@ impl<T: BusOP> CPU<T> {
         self.bus.tick(opcode.cycles);
 
         if program_counter_state == self.program_counter {
-            self.program_counter += (opcode.len - 1) as u16;
+            self.program_counter = self.program_counter.wrapping_add((opcode.len - 1) as u16);
         }
 
         // println!("Running callback");
