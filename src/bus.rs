@@ -133,7 +133,7 @@ impl<'a> Bus<'a> {
         match addr {
             RAM..=RAM_MIRRORS_END => {
                 let mirror_down_addr = addr & 0b00000111_11111111;
-                println!("Writing: 0x{:04X}({}) -> 0x{:04X}({}): 0x{:02X}({})", addr, addr, mirror_down_addr, mirror_down_addr, data, data);
+                println!("DWriting: 0x{:04X}({}) -> 0x{:04X}({}): 0x{:02X}({})", addr, addr, mirror_down_addr, mirror_down_addr, data, data);
                 self.cpu_vram[mirror_down_addr as usize] = data;
             }
             0x2000 => {
@@ -150,7 +150,7 @@ impl<'a> Bus<'a> {
                 self.ppu.write_to_oam_addr(data);
             }
             0x2004 => {
-                println!("Writing oam data 0x2004(8196): 0x{:02X}", data);
+                println!("DWriting oam data 0x2004(8196): 0x{:02X}", data);
                 self.ppu.direct_write_to_oam_data(data);
             }
             0x2005 => {
@@ -160,12 +160,12 @@ impl<'a> Bus<'a> {
                 self.ppu.direct_write_to_ppu_addr(data);
             }
             0x2007 => {
-                self.ppu.write_to_ppu_data_with_inc(data, false);
+                self.ppu.direct_write_to_ppu_data(data);
             }
 
             0x2008..=PPU_REGISTERS_MIRRORS_END => {
                 let mirror_down_addr = addr & 0b00100000_00000111;
-                println!("Writing: 0x{:04X}({}) -> 0x{:04X}({}): 0x{:02X}({})", addr, addr, mirror_down_addr, mirror_down_addr, data, data);
+                println!("DWriting: 0x{:04X}({}) -> 0x{:04X}({}): 0x{:02X}({})", addr, addr, mirror_down_addr, mirror_down_addr, data, data);
                 self.direct_write(mirror_down_addr, data);
             }
             0x8000..=0xFFFF => {
@@ -189,7 +189,7 @@ impl<'a> Bus<'a> {
             RAM..=RAM_MIRRORS_END => {
                 let mirror_down_addr = addr & 0b0000_0111_1111_1111;
                 let data = self.cpu_vram[mirror_down_addr as usize];
-                println!("Reading: 0x{:04X}({}) -> 0x{:04X}({}): 0x{:02X}({})", addr, addr, mirror_down_addr, mirror_down_addr, data, data);
+                println!("DReading: 0x{:04X}({}) -> 0x{:04X}({}): 0x{:02X}({})", addr, addr, mirror_down_addr, mirror_down_addr, data, data);
                 data
             }
             0x2000 => {
@@ -206,23 +206,23 @@ impl<'a> Bus<'a> {
             }
             0x2004 => {
                 let data = self.ppu.read_oam_data();
-                println!("Reading oam data 0x2004(8196): 0x{:02X}", data);
+                println!("DReading oam data 0x2004(8196): 0x{:02X}", data);
                 data
             }
             0x2005 => {
                 self.ppu.read_scroll()
             }
             0x2006 => {
-                self.ppu.addr.get_u8()
+                self.ppu.read_addr()
             }
             0x2007 => {
-                self.ppu.read_data_with_inc(false)
+                self.ppu.direct_read_data()
             }
 
             0x2008..=PPU_REGISTERS_MIRRORS_END => {
                 let mirror_down_addr = addr & 0b0010_0000_0000_0111;
                 let data = self.direct_read(mirror_down_addr);
-                println!("Reading: 0x{:04X}({}) -> 0x{:04X}({}): 0x{:02X}({})", addr, addr, mirror_down_addr, mirror_down_addr, data, data);
+                println!("DReading: 0x{:04X}({}) -> 0x{:04X}({}): 0x{:02X}({})", addr, addr, mirror_down_addr, mirror_down_addr, data, data);
                 data
             }
             0x8000..=0xFFFF => self.read_prg_rom(addr),
@@ -269,7 +269,7 @@ impl<'a> Mem for Bus<'a> {
                 self.ppu.read_scroll()
             }
             0x2006 => {
-                self.ppu.addr.get_u8()
+                self.ppu.read_addr()
             }
             0x2007 => {
                 self.ppu.read_data()
@@ -299,7 +299,7 @@ impl<'a> Mem for Bus<'a> {
         match addr {
             RAM..=RAM_MIRRORS_END => {
                 let mirror_down_addr = addr & 0b00000111_11111111;
-                // println!("Writing: {} -> {}", addr, mirror_down_addr);
+                println!("Writing: {} -> {}", addr, mirror_down_addr);
                 self.cpu_vram[mirror_down_addr as usize] = data;
             }
             0x2000 => {
@@ -330,7 +330,7 @@ impl<'a> Mem for Bus<'a> {
 
             0x2008..=PPU_REGISTERS_MIRRORS_END => {
                 let mirror_down_addr = addr & 0b00100000_00000111;
-                // println!("Writing: {:04X} -> {:04X}: {:02X}", addr, mirror_down_addr, data);
+                println!("Writing: {:04X} -> {:04X}: {:02X}", addr, mirror_down_addr, data);
                 self.mem_write(mirror_down_addr, data);
             }
             0x8000..=0xFFFF => {

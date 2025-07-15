@@ -119,6 +119,10 @@ impl NesPPU {
         self.scroll.get_u8()
     }
 
+    pub fn read_addr(&mut self) -> u8 {
+        self.addr.get_u8()
+    }
+
     pub fn read_oam_addr(&mut self) -> u8 {
         self.oam_addr
     }
@@ -198,15 +202,22 @@ impl NesPPU {
         }
     }
 
-    pub fn read_data(&mut self) -> u8 {
-        self.read_data_with_inc(true)
+    pub fn direct_read_data(&mut self) -> u8 {
+        let addr = self.addr.get();
+
+        match addr {
+            0..=0x1fff => self.chr_rom[addr as usize],
+            // 0x2000..=0x2fff => {
+            0x2000..=0x3eff => self.vram[self.mirror_vram_addr(addr) as usize],
+            // 0x3000..=0x3eff => panic!("addr space 0x3000..0x3eff is not expected to be used"),
+            0x3f00..=0x3fff => self.palette_table[(addr - 0x3f00) as usize],
+            _ => panic!("unexpected access to mirrored space {}", addr),
+        }
     }
 
-    pub fn read_data_with_inc(&mut self, with_inc: bool) -> u8 {
+    pub fn read_data(&mut self) -> u8 {
         let addr = self.addr.get();
-        if with_inc {
-            self.increment_vram_addr();
-        }
+        self.increment_vram_addr();
 
         match addr {
             0..=0x1fff => {
@@ -229,8 +240,33 @@ impl NesPPU {
     pub fn write_to_ppu_data(&mut self, data: u8) {
         self.write_to_ppu_data_with_inc(data, true);
     }
-    
-    pub fn write_to_ppu_data_with_inc(&mut self, data: u8, with_inc: bool) {
+
+    pub fn direct_write_to_ppu_data(&mut self, data: u8) {
+        let addr = self.addr.get();
+
+        match addr {
+            0..=0x1fff => {
+                self.chr_rom[addr as usize] = data;
+                self.internal_data_buf = data;
+            }
+            0x2000..=0x2fff => {
+                self.vram[self.mirror_vram_addr(addr) as usize] = data;
+                self.internal_data_buf = data;
+            }
+            0x3000..=0x3eff => panic!("addr space 0x3000..0x3eff is not expected to be used"),
+            //Addresses $3F10/$3F14/$3F18/$3F1C are mirrors of $3F00/$3F04/$3F08/$3F0C
+            0x3f10 | 0x3f14 | 0x3f18 | 0x3f1c => {
+                let add_mirror = addr - 0x10;
+                self.palette_table[(add_mirror - 0x3f00) as usize] = data;
+            }
+            0x3f00..=0x3fff => {
+                self.palette_table[(addr - 0x3f00) as usize] = data;
+            }
+            _ => panic!("unexpected access to mirrored space {}", addr),
+        }
+    }
+
+    fn write_to_ppu_data_with_inc(&mut self, data: u8, with_inc: bool) {
         let addr = self.addr.get();
         if with_inc {
             self.increment_vram_addr();

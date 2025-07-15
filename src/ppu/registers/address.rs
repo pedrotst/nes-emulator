@@ -25,6 +25,7 @@ impl PPUADDR {
     }
 
     pub fn get_u8(&self) -> u8 {
+        println!("reading address, latch: {}", self.latch_state.borrow().is_set());
         if self.latch_state.borrow().is_set() {
             self.value.0
         } else {
@@ -41,6 +42,7 @@ impl PPUADDR {
     }
 
     fn update_ping(&mut self, data: u8, ping: bool) {
+        println!("writting address, latch: {}", self.latch_state.borrow().is_set());
         if self.latch_state.borrow().is_set() {
             self.value.0 = data;
         } else {

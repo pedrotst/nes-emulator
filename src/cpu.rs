@@ -803,6 +803,7 @@ impl<'a> CPU<'a> {
             .get(&code)
             .expect(&format!("OpCode {:x} is not recognized", code));
 
+        println!("Running CPU");
         match opcode.mneumonic {
             "LDA" => {
                 self.lda(&opcode.mode);

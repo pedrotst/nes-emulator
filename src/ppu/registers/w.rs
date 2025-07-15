@@ -1,3 +1,6 @@
+use derive_more::Display;
+
+#[derive(Default, Debug, Display)]
 pub struct WREG {
     latch: bool
 }
@@ -5,7 +8,7 @@ pub struct WREG {
 impl WREG {
     pub fn new() -> Self {
         WREG {
-            latch: true
+            latch: false
         }
     }
 
