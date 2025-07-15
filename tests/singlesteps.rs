@@ -17,13 +17,9 @@ use serde::Deserialize;
 macro_rules! assert_cpu_eq {
     ($left:expr, $right:expr, $test_id:expr, $field_name:expr) => {
         assert_eq!(
-            $left,
-            $right,
+            $left, $right,
             "Test {} failed: {} mismatch — got {}, expected {}",
-            $test_id,
-            $field_name,
-            $left,
-            $right
+            $test_id, $field_name, $left, $right
         );
     };
 }
@@ -70,10 +66,11 @@ fn run_singlesteps() {
     //let first = &data[0];
     //println!("{:#?}",first);
 
-    let mut i : i32 = 1;
+    let mut i: i32 = 1;
     for test_state in &data {
+        println!("\n==============================");
         println!("Running test {}", i);
-        println!("name: {}",test_state.name);
+        println!("name: {}", test_state.name);
         let mut cpu = CPU::new(Bus::empty_bus());
         for (addr, data) in &test_state.initial.ram {
             // println!("Writing addr: {:04X}, data: {:02X}", *addr, *data);
@@ -87,7 +84,6 @@ fn run_singlesteps() {
         cpu.status = test_state.initial.p;
         cpu.stack_pointer = test_state.initial.s;
 
-
         println!("Started step");
         cpu.step(|cpu| {
             println!("{}", trace(cpu));
@@ -99,13 +95,13 @@ fn run_singlesteps() {
         assert_cpu_eq!(cpu.stack_pointer, test_state.r#final.s, i, "Stack Pointer");
         assert_cpu_eq!(cpu.status, test_state.r#final.p, i, "Status flag");
         assert_cpu_eq!(cpu.program_counter, test_state.r#final.pc, i, "PC");
-        // assert_eq!(cpu.register_a, test_state.r#final.a, "Running test {}, expected {}, got {}", i, cpu.register_a, test_state.r#final.a);
-        // assert_eq!(cpu.register_x, test_state.r#final.x);
-        // assert_eq!(cpu.register_y, test_state.r#final.y);
-        // assert_eq!(cpu.stack_pointer, test_state.r#final.s);
-        // assert_eq!(cpu.status, test_state.r#final.p);
-        // assert_eq!(cpu.program_counter, test_state.r#final.pc);
+
+        for (addr, data) in &test_state.r#final.ram {
+            // println!("Writing addr: {:04X}, data: {:02X}", *addr, *data);
+            let my_data = cpu.bus.direct_read(*addr);
+            assert_eq!(my_data, *data, "RAM @ 0x{0:04X}({0}) = {1:02X}({1}), but should be {2:02X}({2})", *addr, my_data, *data);
+        }
+
         i += 1;
     }
-
 }

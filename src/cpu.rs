@@ -799,7 +799,6 @@ impl<'a> CPU<'a> {
         println!("Started tracing");
         callback(self);
         println!("Finished tracing");
-        callback(self);
         let code = self.mem_read(self.program_counter);
         self.program_counter += 1;
         let program_counter_state = self.program_counter;

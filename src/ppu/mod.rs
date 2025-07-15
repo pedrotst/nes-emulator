@@ -127,7 +127,13 @@ impl NesPPU {
         self.oam_addr
     }
 
+    pub fn direct_read_oam_data(&mut self) -> u8 {
+        println!("DReading oam_data @ 0x{:02X}", 0);
+        self.oam_data[0]
+    }
+
     pub fn read_oam_data(&mut self) -> u8 {
+        println!("Reading oam_data @ 0x{:02X}", self.oam_addr);
         self.oam_data[self.oam_addr as usize]
     }
 
@@ -170,7 +176,8 @@ impl NesPPU {
     }
 
     pub fn direct_write_to_oam_data(&mut self, value: u8) {
-        self.oam_data[self.oam_addr as usize] = value;
+        println!("DWriting oam_data @ 0x{:02X}", 0);
+        self.oam_data[0] = value;
     }
 
     fn increment_vram_addr(&mut self) {

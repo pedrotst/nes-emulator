@@ -205,7 +205,7 @@ impl<'a> Bus<'a> {
                 self.ppu.read_oam_addr()
             }
             0x2004 => {
-                let data = self.ppu.read_oam_data();
+                let data = self.ppu.direct_read_oam_data();
                 println!("DReading oam data 0x2004(8196): 0x{:02X}", data);
                 data
             }
