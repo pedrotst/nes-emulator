@@ -113,6 +113,8 @@ lazy_static! {
         OpCode::new_unofficial(0xB7, "LAX", 2, 4, AddressingMode::ZeroPage_Y),
         OpCode::new_unofficial(0xBF, "LAX", 3, 4 /* +1 */, AddressingMode::Absolute_Y),
 
+        OpCode::new_unofficial(0xBB, "LAS", 3, 4 /* +1 */, AddressingMode::Absolute_Y),
+
 
         OpCode::new(0xA2, "LDX", 2, 2, AddressingMode::Immediate),
         OpCode::new(0xA6, "LDX", 2, 3, AddressingMode::ZeroPage),

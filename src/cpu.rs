@@ -276,6 +276,21 @@ impl<T: BusOP> CPU<T> {
         }
     }
 
+    fn las(&mut self, mode: &AddressingMode) {
+        let (addr, page_cross) = self.get_operand_address(mode);
+        let value = self.mem_read(addr) & self.stack_pointer;
+
+        self.register_a = value;
+        self.register_x = value;
+        self.stack_pointer = value;
+        self.update_zero_flag(self.register_a);
+        self.update_negative_flag(self.register_a);
+
+        if page_cross {
+            self.bus.tick(1);
+        }
+    }
+
     fn ldx(&mut self, mode: &AddressingMode) {
         let (addr, page_cross) = self.get_operand_address(mode);
         let value = self.mem_read(addr);
@@ -816,6 +831,10 @@ impl<T: BusOP> CPU<T> {
             }
             "LAX" => {
                 self.lax(&opcode.mode);
+            }
+
+            "LAS" => {
+                self.las(&opcode.mode);
             }
 
             "LDX" => {

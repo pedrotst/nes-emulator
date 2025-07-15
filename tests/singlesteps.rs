@@ -134,10 +134,10 @@ fn run_singlesteps() {
 
 #[test]
 fn run_a_singlestep() {
-    let contents = include_str!("/Users/pedroabreu/gitprojects/65x02/nes6502/v1/a3.json");
+    let contents = include_str!("/Users/pedroabreu/gitprojects/65x02/nes6502/v1/bb.json");
     let data: Vec<CPUState> = serde_json::from_str(&contents).unwrap();
 
-    let i: i32 = 5197;
+    let i: i32 = 0;
     let test_state = &data[i as usize];
     println!("\n==============================");
     println!("Running test {}", i);
