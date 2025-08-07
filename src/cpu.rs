@@ -472,6 +472,14 @@ impl<T: BusOP> CPU<T> {
     }
 
     fn ror(&mut self, mode: &AddressingMode) {
+        self.ror_with_page(mode, true);
+    }
+
+    fn ror_no_page(&mut self, mode: &AddressingMode) {
+        self.ror_with_page(mode, false);
+    }
+
+    fn ror_with_page(&mut self, mode: &AddressingMode, pc: bool) {
         let (addr, page_cross) = self.get_operand_address(mode);
         let mut data = self.mem_read(addr);
 
@@ -483,7 +491,7 @@ impl<T: BusOP> CPU<T> {
         self.update_negative_flag(data);
         self.mem_write(addr, data);
 
-        if page_cross {
+        if page_cross && pc{
             self.bus.tick(1);
         }
     }
@@ -498,6 +506,13 @@ impl<T: BusOP> CPU<T> {
     }
 
     fn or(&mut self, mode: &AddressingMode) {
+        self.or_with_page(mode, true);
+    }
+    fn or_no_page(&mut self, mode: &AddressingMode) {
+        self.or_with_page(mode, false);
+    }
+
+    fn or_with_page(&mut self, mode: &AddressingMode, pc: bool) {
         let (addr, page_cross) = self.get_operand_address(mode);
         let data = self.mem_read(addr);
         self.register_a |= data;
@@ -505,12 +520,20 @@ impl<T: BusOP> CPU<T> {
         self.update_zero_flag(self.register_a);
         self.update_negative_flag(self.register_a);
 
-        if page_cross {
+        if page_cross && pc{
             self.bus.tick(1);
         }
     }
 
     fn eor(&mut self, mode: &AddressingMode) {
+        self.eor_with_page(mode, true);
+    }
+
+    fn eor_no_page(&mut self, mode: &AddressingMode) {
+        self.eor_with_page(mode, false);
+    }
+
+    fn eor_with_page (&mut self, mode: &AddressingMode, pc: bool) {
         let (addr, page_cross) = self.get_operand_address(mode);
         let data = self.mem_read(addr);
         self.register_a ^= data;
@@ -518,7 +541,7 @@ impl<T: BusOP> CPU<T> {
         self.update_zero_flag(self.register_a);
         self.update_negative_flag(self.register_a);
 
-        if page_cross {
+        if page_cross && pc{
             self.bus.tick(1);
         }
     }
@@ -539,7 +562,7 @@ impl<T: BusOP> CPU<T> {
 
     fn slo(&mut self, mode: &AddressingMode) {
         self.asl(mode);
-        self.or(mode);
+        self.or_no_page(mode);
     }
 
     fn rla(&mut self, mode: &AddressingMode) {
@@ -549,12 +572,12 @@ impl<T: BusOP> CPU<T> {
 
     fn sre(&mut self, mode: &AddressingMode) {
         self.lsr(mode);
-        self.eor(mode);
+        self.eor_no_page(mode);
     }
 
     fn rra(&mut self, mode: &AddressingMode) {
-        self.ror(mode);
-        self.adc_sbc(mode, false);
+        self.ror_no_page(mode);
+        self.adc_sbc_no_page(mode, false);
     }
 
     fn compare(&mut self, mode: &AddressingMode, compare_with: u8) {
