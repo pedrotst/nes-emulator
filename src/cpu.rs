@@ -608,7 +608,7 @@ impl<T: BusOP> CPU<T> {
         }
     }
 
-    fn branch(&mut self, cmp: bool) {
+    fn branch(&mut self, cmp: bool) -> bool {
         let offset = self.mem_read(self.program_counter);
         let prev_pc = self.program_counter;
 
@@ -621,7 +621,9 @@ impl<T: BusOP> CPU<T> {
             if page_cross(prev_pc.wrapping_add(1), self.program_counter) {
                 self.bus.tick(1);
             }
+            return true;
         }
+        return false;
     }
 
     fn jmp(&mut self, mode: &AddressingMode) {
@@ -885,6 +887,9 @@ impl<T: BusOP> CPU<T> {
             .get(&code)
             .expect(&format!("OpCode {:x} is not recognized", code));
 
+        // Branch instructions can branch to the same location
+        let mut branched = false;
+
         // println!("Running CPU");
         match opcode.mneumonic {
             "LDA" => {
@@ -1065,31 +1070,31 @@ impl<T: BusOP> CPU<T> {
 
             /* Branch */
             "BNE" => {
-                self.branch(byte_utils::is_zero_set(self.status) == false);
+                branched = self.branch(byte_utils::is_zero_set(self.status) == false);
             }
             "BEQ" => {
-                self.branch(byte_utils::is_zero_set(self.status) == true);
+                branched = self.branch(byte_utils::is_zero_set(self.status) == true);
             }
 
             "BCC" => {
-                self.branch(byte_utils::is_carry_set(self.status) == false);
+                branched = self.branch(byte_utils::is_carry_set(self.status) == false);
             }
             "BCS" => {
-                self.branch(byte_utils::is_carry_set(self.status) == true);
+                branched = self.branch(byte_utils::is_carry_set(self.status) == true);
             }
 
             "BMI" => {
-                self.branch(byte_utils::is_negative_set(self.status) == true);
+                branched = self.branch(byte_utils::is_negative_set(self.status) == true);
             }
             "BPL" => {
-                self.branch(byte_utils::is_negative_set(self.status) == false);
+                branched = self.branch(byte_utils::is_negative_set(self.status) == false);
             }
 
             "BVC" => {
-                self.branch(byte_utils::is_overflow_set(self.status) == false);
+                branched = self.branch(byte_utils::is_overflow_set(self.status) == false);
             }
             "BVS" => {
-                self.branch(byte_utils::is_overflow_set(self.status) == true);
+                branched = self.branch(byte_utils::is_overflow_set(self.status) == true);
             }
 
             "JMP" => {
@@ -1179,7 +1184,7 @@ impl<T: BusOP> CPU<T> {
 
         self.bus.tick(opcode.cycles);
 
-        if program_counter_state == self.program_counter {
+        if program_counter_state == self.program_counter && !branched {
             self.program_counter = self.program_counter.wrapping_add((opcode.len - 1) as u16);
         }
 
