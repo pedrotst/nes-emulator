@@ -210,7 +210,7 @@ impl<T: BusOP> CPU<T> {
     }
 
     pub fn pop_stack(&mut self) -> u8 {
-        self.stack_pointer += 1;
+        self.stack_pointer = self.stack_pointer.wrapping_add(1);
         let hi = 0x01;
         let addr = (hi << 8) | self.stack_pointer as u16;
         let data = self.mem_read(addr);
@@ -577,6 +577,14 @@ impl<T: BusOP> CPU<T> {
     }
 
     fn adc_sbc(&mut self, mode: &AddressingMode, sub: bool) {
+        self.adc_sbc_with_page(mode, sub, true);
+    }
+
+    fn adc_sbc_no_page(&mut self, mode: &AddressingMode, sub: bool) {
+        self.adc_sbc_with_page(mode, sub, false);
+    }
+
+    fn adc_sbc_with_page(&mut self, mode: &AddressingMode, sub: bool, pc: bool) {
         let (addr, page_cross) = self.get_operand_address(mode);
         let mut data = self.mem_read(addr);
         if sub {
@@ -595,7 +603,7 @@ impl<T: BusOP> CPU<T> {
         self.update_overflow(overflow);
         self.update_carry(carry1 || carry);
 
-        if page_cross {
+        if page_cross && pc {
             self.bus.tick(1);
         }
     }
@@ -685,8 +693,32 @@ impl<T: BusOP> CPU<T> {
     }
 
     fn isb(&mut self, mode: &AddressingMode) {
-        self.inc(&mode);
-        self.adc_sbc(&mode, true);
+        // self.inc(&mode);
+        // self.adc_sbc_no_page(&mode, true);
+
+        let (addr, page_cross) = self.get_operand_address(mode);
+        let mut data = self.mem_read(addr);
+
+        let x = data.wrapping_add(1);
+        self.mem_write(addr, x);
+
+        data = !data;
+
+        let carry = byte_utils::get_carry(self.status);
+
+        let (result1, carry1) = self.register_a.overflowing_add(data);
+        let (result, carry) = result1.overflowing_add(carry);
+        let overflow = (self.register_a ^ result) & (data ^ result) & 0x80 != 0;
+        self.register_a = result;
+
+        self.update_zero_flag(result);
+        self.update_negative_flag(result);
+        self.update_overflow(overflow);
+        self.update_carry(carry1 || carry);
+
+        if page_cross {
+            self.bus.tick(1);
+        }
     }
 
     fn ahx(&mut self, mode: &AddressingMode) {
@@ -705,9 +737,11 @@ impl<T: BusOP> CPU<T> {
         let mut addr: u16 = ((base & 0x00ff) + self.register_x as u16) & 0xff;
         addr |= (value as u16) << 8;
 
-        println!("SHY ({:02X} & {:02X} = {:02X}) writing to {:04X} = {}", saddr, self.register_y, value, addr, value);
+        println!(
+            "SHY ({:02X} & {:02X} = {:02X}) writing to {:04X} = {}",
+            saddr, self.register_y, value, addr, value
+        );
         self.mem_write(addr, value);
-
     }
 
     fn shx(&mut self, mode: &AddressingMode) {
@@ -734,9 +768,10 @@ impl<T: BusOP> CPU<T> {
         self.update_negative_flag(result);
         self.update_zero_flag(result);
 
+        /*
         if page_cross {
             self.bus.tick(1);
-        }
+        }*/
     }
 
     /* TODO: Implement delayed effect of updating the I flag */
@@ -750,7 +785,7 @@ impl<T: BusOP> CPU<T> {
     }
 
     fn brk(&mut self) {
-        self.push_stack_u16(self.program_counter + 2);
+        self.push_stack_u16(self.program_counter + 1);
         self.push_stack(self.status | 0b0011_0000);
         byte_utils::set_interrupt_disable(&mut self.status);
         self.program_counter = self.mem_read_u16(0xFFFE);
@@ -842,7 +877,7 @@ impl<T: BusOP> CPU<T> {
         callback(self);
         // println!("Finished tracing");
         let code = self.mem_read(self.program_counter);
-        self.program_counter += 1;
+        self.program_counter = self.program_counter.wrapping_add(1);
         let program_counter_state = self.program_counter;
 
         let opcode = opcodes
@@ -1135,7 +1170,10 @@ impl<T: BusOP> CPU<T> {
                 self.brk();
             }
 
-            _ => todo!(),
+            _ => {
+                println!("{}", opcode.mneumonic);
+                todo!()
+            }
         }
 
         self.bus.tick(opcode.cycles);
