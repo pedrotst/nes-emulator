@@ -696,15 +696,19 @@ impl<T: BusOP> CPU<T> {
         // self.inc(&mode);
         // self.adc_sbc_no_page(&mode, true);
 
-        let (addr, page_cross) = self.get_operand_address(mode);
+        let (addr, _page_cross) = self.get_operand_address(mode);
         let mut data = self.mem_read(addr);
+        // println!("addr: {}", addr);
+        // println!("data: {}", data);
 
-        let x = data.wrapping_add(1);
-        self.mem_write(addr, x);
+        data = data.wrapping_add(1);
+        self.mem_write(addr, data);
 
         data = !data;
+        // println!("!data: {}", data);
 
         let carry = byte_utils::get_carry(self.status);
+        // println!("carry: {}", carry);
 
         let (result1, carry1) = self.register_a.overflowing_add(data);
         let (result, carry) = result1.overflowing_add(carry);
@@ -716,9 +720,6 @@ impl<T: BusOP> CPU<T> {
         self.update_overflow(overflow);
         self.update_carry(carry1 || carry);
 
-        if page_cross {
-            self.bus.tick(1);
-        }
     }
 
     fn ahx(&mut self, mode: &AddressingMode) {
