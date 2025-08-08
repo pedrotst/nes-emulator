@@ -515,6 +515,15 @@ impl<T: BusOP> CPU<T> {
     }
 
     fn and(&mut self, mode: &AddressingMode) {
+        self.and_with_page(mode, true);
+    }
+
+    fn and_no_page(&mut self, mode: &AddressingMode) {
+        self.and_with_page(mode, false);
+
+    }
+
+    fn and_with_page(&mut self, mode: &AddressingMode, pc: bool) {
         let (addr, page_cross) = self.get_operand_address(mode);
         let data = self.mem_read(addr);
         self.register_a &= data;
@@ -522,7 +531,7 @@ impl<T: BusOP> CPU<T> {
         self.update_zero_flag(self.register_a);
         self.update_negative_flag(self.register_a);
 
-        if page_cross {
+        if page_cross && pc {
             self.bus.tick(1);
         }
     }
@@ -589,7 +598,7 @@ impl<T: BusOP> CPU<T> {
 
     fn rla(&mut self, mode: &AddressingMode) {
         self.rol(mode);
-        self.and(mode);
+        self.and_no_page(mode);
     }
 
     fn sre(&mut self, mode: &AddressingMode) {
