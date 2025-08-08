@@ -471,6 +471,24 @@ impl<T: BusOP> CPU<T> {
         self.update_negative_flag(self.register_a);
     }
 
+    fn axs(&mut self, mode: &AddressingMode) {
+        let (addr, _page_cross) = self.get_operand_address(mode);
+        let data = self.mem_read(addr);
+
+        let and_res = self.register_a & self.register_x;
+        let result = and_res.wrapping_sub(data);
+        let carry = and_res >= data;
+
+        self.register_x = result;
+
+        self.update_zero_flag(result);
+        self.update_negative_flag(result);
+
+        self.update_carry(carry);
+        
+    }
+    
+
     fn ror(&mut self, mode: &AddressingMode) {
         self.ror_with_page(mode, true);
     }
@@ -497,12 +515,16 @@ impl<T: BusOP> CPU<T> {
     }
 
     fn and(&mut self, mode: &AddressingMode) {
-        let (addr, _page_cross) = self.get_operand_address(mode);
+        let (addr, page_cross) = self.get_operand_address(mode);
         let data = self.mem_read(addr);
         self.register_a &= data;
 
         self.update_zero_flag(self.register_a);
         self.update_negative_flag(self.register_a);
+
+        if page_cross {
+            self.bus.tick(1);
+        }
     }
 
     fn or(&mut self, mode: &AddressingMode) {
@@ -753,20 +775,13 @@ impl<T: BusOP> CPU<T> {
         self.mem_write(addr, value);
     }
 
-    fn shy(&mut self, mode: &AddressingMode) {
+    fn shy(&mut self) {
         let base = self.mem_read_u16(self.program_counter);
-        // let addr = base.wrapping_add(self.register_x as u16);
-
-        // let (addr, _page_cross) = self.get_operand_address(mode);
         let saddr = (base >> 8) as u8;
         let value = self.register_y & (saddr + 1);
         let mut addr: u16 = ((base & 0x00ff) + self.register_x as u16) & 0xff;
         addr |= (value as u16) << 8;
 
-        println!(
-            "SHY ({:02X} & {:02X} = {:02X}) writing to {:04X} = {}",
-            saddr, self.register_y, value, addr, value
-        );
         self.mem_write(addr, value);
     }
 
@@ -777,7 +792,7 @@ impl<T: BusOP> CPU<T> {
     }
 
     fn dcp(&mut self, mode: &AddressingMode) {
-        let (addr, page_cross) = self.get_operand_address(mode);
+        let (addr, _page_cross) = self.get_operand_address(mode);
         let value = self.mem_read(addr);
         let (data, _carry) = value.overflowing_sub(1);
         self.mem_write(addr, data);
@@ -1013,6 +1028,10 @@ impl<T: BusOP> CPU<T> {
                 self.ror(&opcode.mode);
             }
 
+            "AXS" => {
+                self.axs(&opcode.mode);
+            }
+
             /* BITWISE */
             "AND" => {
                 self.and(&opcode.mode);
@@ -1178,7 +1197,7 @@ impl<T: BusOP> CPU<T> {
             }
 
             "SHY" => {
-                self.shy(&opcode.mode);
+                self.shy();
             }
 
             "SHX" => {

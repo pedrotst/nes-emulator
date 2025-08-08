@@ -181,6 +181,8 @@ lazy_static! {
         OpCode::new(0x6E, "ROR", 3, 6, AddressingMode::Absolute),
         OpCode::new(0x7E, "ROR", 3, 7, AddressingMode::Absolute_X),
 
+        OpCode::new_unofficial(0xCB, "AXS", 2, 2, AddressingMode::Immediate),
+
         /* BITWISE */
 
         OpCode::new(0x29, "AND", 2, 2,          AddressingMode::Immediate),
