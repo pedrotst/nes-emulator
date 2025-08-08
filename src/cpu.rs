@@ -627,13 +627,13 @@ impl<T: BusOP> CPU<T> {
     }
 
     fn arr(&mut self, mode: &AddressingMode) {
+        let (addr, _page_cross) = self.get_operand_address(mode);
+
         self.and_no_page(mode);
         self.ror_accumulator();
 
         self.update_carry(self.register_a & 0b0100_0000 != 0);
-        self.update_overflow(self.register_a & 0b0100_0000 != self.register_a & 0b0010_0000);
-        // my: 1011 1101
-        // th: 1111 1101
+        self.update_overflow((self.register_a ^ (self.register_a << 1)) & 0x40 != 0);
 
         
     }
