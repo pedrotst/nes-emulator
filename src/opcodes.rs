@@ -181,7 +181,6 @@ lazy_static! {
         OpCode::new(0x6E, "ROR", 3, 6, AddressingMode::Absolute),
         OpCode::new(0x7E, "ROR", 3, 7, AddressingMode::Absolute_X),
 
-        OpCode::new_unofficial(0xCB, "AXS", 2, 2, AddressingMode::Immediate),
 
         /* BITWISE */
 
@@ -246,6 +245,11 @@ lazy_static! {
         OpCode::new_unofficial(0x7B, "RRA", 3, 7,          AddressingMode::Absolute_Y),
         OpCode::new_unofficial(0x63, "RRA", 2, 8,          AddressingMode::Indirect_X),
         OpCode::new_unofficial(0x73, "RRA", 2, 8,          AddressingMode::Indirect_Y),
+
+        OpCode::new_unofficial(0x4B, "ALR", 2, 2,          AddressingMode::Immediate),
+        OpCode::new_unofficial(0x0B, "ANC", 2, 2,          AddressingMode::Immediate),
+        OpCode::new_unofficial(0x6B, "ARR", 2, 2,          AddressingMode::Immediate),
+        OpCode::new_unofficial(0xCB, "AXS", 2, 2,          AddressingMode::Immediate),
 
         /* Compare X and   */
         OpCode::new(0xC9, "CMP", 2, 2,          AddressingMode::Immediate),

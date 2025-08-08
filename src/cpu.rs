@@ -611,6 +611,11 @@ impl<T: BusOP> CPU<T> {
         self.adc_sbc_no_page(mode, false);
     }
 
+    fn alr(&mut self, mode: &AddressingMode) {
+        self.and_no_page(mode);
+        self.lsr_accumulator();
+    }
+
     fn compare(&mut self, mode: &AddressingMode, compare_with: u8) {
         let (addr, page_cross) = self.get_operand_address(mode);
         let data = self.mem_read(addr);
@@ -1072,6 +1077,10 @@ impl<T: BusOP> CPU<T> {
 
             "RRA" => {
                 self.rra(&opcode.mode);
+            }
+
+            "ALR" => {
+                self.alr(&opcode.mode);
             }
 
             /* Compare X and Y */
