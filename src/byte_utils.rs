@@ -40,6 +40,10 @@ pub fn get_carry(flags: u8) -> u8 {
     flags & 0b0000_0001
 }
 
+pub fn get_negative(flags: u8) -> u8 {
+    flags & 0b1000_0000
+}
+
 /* ============ Set Flags ============== */
 
 pub fn set_carry(flags: &mut u8) {

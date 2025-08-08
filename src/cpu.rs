@@ -616,6 +616,16 @@ impl<T: BusOP> CPU<T> {
         self.lsr_accumulator();
     }
 
+    fn anc(&mut self, mode: &AddressingMode) {
+        self.and_no_page(mode);
+
+        if byte_utils::is_negative_set(self.status) {
+            byte_utils::set_carry(&mut self.status);
+        } else {
+            byte_utils::unset_carry(&mut self.status);
+        }
+    }
+
     fn compare(&mut self, mode: &AddressingMode, compare_with: u8) {
         let (addr, page_cross) = self.get_operand_address(mode);
         let data = self.mem_read(addr);
@@ -1081,6 +1091,10 @@ impl<T: BusOP> CPU<T> {
 
             "ALR" => {
                 self.alr(&opcode.mode);
+            }
+
+            "ANC" => {
+                self.anc(&opcode.mode);
             }
 
             /* Compare X and Y */
