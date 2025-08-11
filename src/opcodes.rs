@@ -248,6 +248,7 @@ lazy_static! {
 
         OpCode::new_unofficial(0x4B, "ALR", 2, 2,          AddressingMode::Immediate),
         OpCode::new_unofficial(0x0B, "ANC", 2, 2,          AddressingMode::Immediate),
+        OpCode::new_unofficial(0x2B, "ANC", 2, 2,          AddressingMode::Immediate),
         OpCode::new_unofficial(0x6B, "ARR", 2, 2,          AddressingMode::Immediate),
         OpCode::new_unofficial(0xCB, "AXS", 2, 2,          AddressingMode::Immediate),
 

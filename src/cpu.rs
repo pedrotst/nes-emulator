@@ -491,15 +491,7 @@ impl<T: BusOP> CPU<T> {
     
 
     fn ror(&mut self, mode: &AddressingMode) {
-        self.ror_with_page(mode, true);
-    }
-
-    fn ror_no_page(&mut self, mode: &AddressingMode) {
-        self.ror_with_page(mode, false);
-    }
-
-    fn ror_with_page(&mut self, mode: &AddressingMode, pc: bool) {
-        let (addr, page_cross) = self.get_operand_address(mode);
+        let (addr, _page_cross) = self.get_operand_address(mode);
         let mut data = self.mem_read(addr);
 
         let carry = byte_utils::get_carry(self.status);
@@ -510,9 +502,6 @@ impl<T: BusOP> CPU<T> {
         self.update_negative_flag(data);
         self.mem_write(addr, data);
 
-        if page_cross && pc{
-            self.bus.tick(1);
-        }
     }
 
     fn and(&mut self, mode: &AddressingMode) {
@@ -538,13 +527,6 @@ impl<T: BusOP> CPU<T> {
     }
 
     fn or(&mut self, mode: &AddressingMode) {
-        self.or_with_page(mode, true);
-    }
-    fn or_no_page(&mut self, mode: &AddressingMode) {
-        self.or_with_page(mode, false);
-    }
-
-    fn or_with_page(&mut self, mode: &AddressingMode, pc: bool) {
         let (addr, page_cross) = self.get_operand_address(mode);
         let data = self.mem_read(addr);
         self.register_a |= data;
@@ -552,20 +534,12 @@ impl<T: BusOP> CPU<T> {
         self.update_zero_flag(self.register_a);
         self.update_negative_flag(self.register_a);
 
-        if page_cross && pc{
+        if page_cross {
             self.bus.tick(1);
         }
     }
 
     fn eor(&mut self, mode: &AddressingMode) {
-        self.eor_with_page(mode, true);
-    }
-
-    fn eor_no_page(&mut self, mode: &AddressingMode) {
-        self.eor_with_page(mode, false);
-    }
-
-    fn eor_with_page (&mut self, mode: &AddressingMode, pc: bool) {
         let (addr, page_cross) = self.get_operand_address(mode);
         let data = self.mem_read(addr);
         self.register_a ^= data;
@@ -573,7 +547,7 @@ impl<T: BusOP> CPU<T> {
         self.update_zero_flag(self.register_a);
         self.update_negative_flag(self.register_a);
 
-        if page_cross && pc{
+        if page_cross {
             self.bus.tick(1);
         }
     }
@@ -593,19 +567,36 @@ impl<T: BusOP> CPU<T> {
     }
 
     fn slo(&mut self, mode: &AddressingMode) {
-        self.asl(mode);
-        self.or_no_page(mode);
+        let (addr, _page_cross) = self.get_operand_address(mode);
+        let mut data = self.mem_read(addr);
+        self.update_carry_msb(data);
+
+        data = data << 1;
+        self.register_a |= data;
+
+        self.update_zero_flag(self.register_a);
+        self.update_negative_flag(self.register_a);
+        self.mem_write(addr, data);
     }
 
     fn rla(&mut self, mode: &AddressingMode) {
-        self.rol(mode);
-        self.and_no_page(mode);
+        let (addr, _page_cross) = self.get_operand_address(mode);
+        let mut data = self.mem_read(addr);
+
+        let carry = byte_utils::get_carry(self.status);
+        self.update_carry_msb(data);
+
+        data = (data << 1) | carry;
+        self.register_a &= data;
+
+        self.update_zero_flag(self.register_a);
+        self.update_negative_flag(self.register_a);
+
+        self.mem_write(addr, data);
+
     }
 
     fn sre(&mut self, mode: &AddressingMode) {
-        // self.lsr(mode);
-        // self.eor_no_page(mode);
-
         let (addr, _page_cross) = self.get_operand_address(mode);
         let mut data = self.mem_read(addr);
         self.update_carry_lsb(data);
@@ -620,13 +611,39 @@ impl<T: BusOP> CPU<T> {
     }
 
     fn rra(&mut self, mode: &AddressingMode) {
-        self.ror_no_page(mode);
-        self.adc_sbc_no_page(mode, false);
+        let (addr, _page_cross) = self.get_operand_address(mode);
+        let mut data = self.mem_read(addr);
+
+        let carry = byte_utils::get_carry(self.status);
+        self.update_carry_lsb(data);
+
+        data = (data >> 1) | (carry << 7);
+
+        let carry = byte_utils::get_carry(self.status);
+
+        let (result1, carry1) = self.register_a.overflowing_add(data);
+        let (result, carry) = result1.overflowing_add(carry);
+        let overflow = (self.register_a ^ result) & (data ^ result) & 0x80 != 0;
+        self.register_a = result;
+
+        self.update_zero_flag(result);
+        self.update_negative_flag(result);
+        self.update_overflow(overflow);
+        self.update_carry(carry1 || carry);
+
+        self.mem_write(addr, data);
     }
 
     fn alr(&mut self, mode: &AddressingMode) {
-        self.and_no_page(mode);
-        self.lsr_accumulator();
+        let (addr, _page_cross) = self.get_operand_address(mode);
+        let data = self.mem_read(addr);
+        self.register_a &= data;
+
+        self.update_carry_lsb(self.register_a);
+
+        self.register_a = self.register_a >> 1;
+        self.update_zero_flag(self.register_a);
+        self.update_negative_flag(self.register_a);
     }
 
     fn anc(&mut self, mode: &AddressingMode) {
@@ -645,8 +662,6 @@ impl<T: BusOP> CPU<T> {
 
         self.update_carry(self.register_a & 0b0100_0000 != 0);
         self.update_overflow((self.register_a ^ (self.register_a << 1)) & 0x40 != 0);
-
-        
     }
 
     fn compare(&mut self, mode: &AddressingMode, compare_with: u8) {
@@ -669,14 +684,6 @@ impl<T: BusOP> CPU<T> {
     }
 
     fn adc_sbc(&mut self, mode: &AddressingMode, sub: bool) {
-        self.adc_sbc_with_page(mode, sub, true);
-    }
-
-    fn adc_sbc_no_page(&mut self, mode: &AddressingMode, sub: bool) {
-        self.adc_sbc_with_page(mode, sub, false);
-    }
-
-    fn adc_sbc_with_page(&mut self, mode: &AddressingMode, sub: bool, pc: bool) {
         let (addr, page_cross) = self.get_operand_address(mode);
         let mut data = self.mem_read(addr);
         if sub {
@@ -695,7 +702,7 @@ impl<T: BusOP> CPU<T> {
         self.update_overflow(overflow);
         self.update_carry(carry1 || carry);
 
-        if page_cross && pc {
+        if page_cross {
             self.bus.tick(1);
         }
     }
@@ -787,9 +794,6 @@ impl<T: BusOP> CPU<T> {
     }
 
     fn isb(&mut self, mode: &AddressingMode) {
-        // self.inc(&mode);
-        // self.adc_sbc_no_page(&mode, true);
-
         let (addr, _page_cross) = self.get_operand_address(mode);
         let mut data = self.mem_read(addr);
 
