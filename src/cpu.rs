@@ -435,6 +435,7 @@ impl<T: BusOP> CPU<T> {
         self.update_carry_lsb(data);
 
         data = data >> 1;
+        
         self.update_zero_flag(data);
         self.update_negative_flag(data);
         self.mem_write(addr, data);
@@ -602,8 +603,20 @@ impl<T: BusOP> CPU<T> {
     }
 
     fn sre(&mut self, mode: &AddressingMode) {
-        self.lsr(mode);
-        self.eor_no_page(mode);
+        // self.lsr(mode);
+        // self.eor_no_page(mode);
+
+        let (addr, _page_cross) = self.get_operand_address(mode);
+        let mut data = self.mem_read(addr);
+        self.update_carry_lsb(data);
+
+        data = data >> 1;
+        self.register_a ^= data;
+
+        self.update_zero_flag(self.register_a);
+        self.update_negative_flag(self.register_a);
+
+        self.mem_write(addr, data);
     }
 
     fn rra(&mut self, mode: &AddressingMode) {
@@ -627,8 +640,6 @@ impl<T: BusOP> CPU<T> {
     }
 
     fn arr(&mut self, mode: &AddressingMode) {
-        let (addr, _page_cross) = self.get_operand_address(mode);
-
         self.and_no_page(mode);
         self.ror_accumulator();
 
@@ -781,17 +792,13 @@ impl<T: BusOP> CPU<T> {
 
         let (addr, _page_cross) = self.get_operand_address(mode);
         let mut data = self.mem_read(addr);
-        // println!("addr: {}", addr);
-        // println!("data: {}", data);
 
         data = data.wrapping_add(1);
         self.mem_write(addr, data);
 
         data = !data;
-        // println!("!data: {}", data);
 
         let carry = byte_utils::get_carry(self.status);
-        // println!("carry: {}", carry);
 
         let (result1, carry1) = self.register_a.overflowing_add(data);
         let (result, carry) = result1.overflowing_add(carry);
