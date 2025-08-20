@@ -155,8 +155,8 @@ impl<'a> Mem for Bus<'a> {
                 self.cpu_vram[mirror_down_addr as usize]
             }
             0x2000 => self.ppu.read_ctrl(),
-            0x2002 => self.ppu.read_status(),
             0x2001 => self.ppu.read_mask(),
+            0x2002 => self.ppu.read_status(),
             0x2003 => self.ppu.read_oam_addr(),
             0x2004 => {
                 let data = self.ppu.read_oam_data();

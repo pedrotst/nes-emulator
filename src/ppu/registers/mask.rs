@@ -21,8 +21,8 @@ bitflags! {
         const ENABLE_BACKGROUND = 0b0000_1000;
         const ENABLE_SPRITE     = 0b0001_0000;
         const EMPH_RED          = 0b0010_0000;
-        const EMPTH_BLUE        = 0b0100_0000;
-        const EMPTH_GREEN       = 0b0100_0000;
+        const EMPH_BLUE         = 0b0100_0000;
+        const EMPH_GREEN        = 0b0100_0000;
    }
 
 }

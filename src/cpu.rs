@@ -89,27 +89,6 @@ impl<T: BusOP> CPU<T> {
         }
     }
 
-    /*
-    pub fn mock_cpu(code: Vec<u8>) -> Self {
-        CPU {
-            register_a: 0,
-            register_x: 0,
-            register_y: 0,
-            status: 0,
-            stack_pointer: STACK_RESET,
-            program_counter: 0x8000,
-            // memory: [0; 0xFFFF],
-            bus: Bus::mock_bus(code),
-        }
-    }*/
-
-    /*
-    pub fn direct_read_u16(&mut self, pos: u16) -> u16 {
-        let lo = self.bus.direct_read(pos) as u16;
-        let hi = self.bus.direct_read(pos + 1) as u16;
-        (hi << 8) | (lo as u16)
-    }*/
-
     fn get_operand_address(&mut self, mode: &AddressingMode) -> (u16, bool) {
         match mode {
             AddressingMode::Immediate => (self.program_counter, false),
@@ -957,9 +936,9 @@ impl<T: BusOP> CPU<T> {
     {
         let ref opcodes: HashMap<u8, &'static opcodes::OpCode> = *opcodes::OPCODES_MAP;
         if let Some(_nmi) = self.bus.poll_nmi_status() {
-            // println!("Interrupting NMI");
+            println!("Interrupting NMI");
             self.interrupt_nmi();
-            // println!("Finished NMI");
+            println!("Finished NMI");
         }
         // println!("Started tracing");
         callback(self);

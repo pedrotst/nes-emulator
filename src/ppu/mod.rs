@@ -66,16 +66,18 @@ impl NesPPU {
             self.cycles = self.cycles - 341;
             self.scanline += 1;
             if self.scanline == 241 {
+                self.status.set_vblank_status(true);
+                self.status.set_sprite_zero_hit(false);
                 if self.ctrl.generate_vblank_nmi() {
-                    self.status.set_vblank_status(true);
-                    todo!("Should trigger NMI interrupt")
+                    self.nmi_interrupt = Some(1);
                 }
             }
         }
 
-        if self.scanline >= 252 {
+        if self.scanline >= 262 {
             self.scanline = 0;
             self.nmi_interrupt = None;
+            self.status.set_sprite_zero_hit(false);
             self.status.reset_vblank_status();
             return true;
         }
@@ -83,16 +85,8 @@ impl NesPPU {
         return false;
     }
 
-    pub fn direct_write_to_ppu_addr(&mut self, value: u8) {
-        self.addr.direct_update(value);
-    }
-
     pub fn write_to_ppu_addr(&mut self, value: u8) {
         self.addr.update(value);
-    }
-
-    pub fn direct_write_to_ctrl(&mut self, value: u8) {
-        self.ctrl.update(value);
     }
 
     pub fn write_to_ctrl(&mut self, value: u8) {
@@ -127,11 +121,6 @@ impl NesPPU {
         self.oam_addr
     }
 
-    pub fn direct_read_oam_data(&mut self) -> u8 {
-        println!("DReading oam_data @ 0x{:02X}", 0);
-        self.oam_data[0]
-    }
-
     pub fn read_oam_data(&mut self) -> u8 {
         println!("Reading oam_data @ 0x{:02X}", self.oam_addr);
         self.oam_data[self.oam_addr as usize]
@@ -145,21 +134,12 @@ impl NesPPU {
         self.status.update(value);
     }
 
-    pub fn direct_write_to_scroll(&mut self, value: u8) {
-        self.scroll.direct_set(value);
-    }
-
     pub fn write_to_scroll(&mut self, value: u8) {
         self.scroll.set(value);
     }
 
     pub fn write_to_oam_addr(&mut self, value: u8) {
         self.oam_addr = value;
-    }
-
-    pub fn direct_read_status(&mut self) -> u8 {
-        let data = self.status.bits();
-        data
     }
 
     pub fn read_status(&mut self) -> u8 {
@@ -173,11 +153,6 @@ impl NesPPU {
     pub fn write_to_oam_data(&mut self, value: u8) {
         self.oam_data[self.oam_addr as usize] = value;
         self.oam_addr = self.oam_addr.wrapping_add(1);
-    }
-
-    pub fn direct_write_to_oam_data(&mut self, value: u8) {
-        println!("DWriting oam_data @ 0x{:02X}", 0);
-        self.oam_data[0] = value;
     }
 
     fn increment_vram_addr(&mut self) {
@@ -209,19 +184,6 @@ impl NesPPU {
         }
     }
 
-    pub fn direct_read_data(&mut self) -> u8 {
-        let addr = self.addr.get();
-
-        match addr {
-            0..=0x1fff => self.chr_rom[addr as usize],
-            // 0x2000..=0x2fff => {
-            0x2000..=0x3eff => self.vram[self.mirror_vram_addr(addr) as usize],
-            // 0x3000..=0x3eff => panic!("addr space 0x3000..0x3eff is not expected to be used"),
-            0x3f00..=0x3fff => self.palette_table[(addr - 0x3f00) as usize],
-            _ => panic!("unexpected access to mirrored space {}", addr),
-        }
-    }
-
     pub fn read_data(&mut self) -> u8 {
         let addr = self.addr.get();
         self.increment_vram_addr();
@@ -233,12 +195,18 @@ impl NesPPU {
                 result
             }
             // 0x2000..=0x2fff => {
-            0x2000..=0x3eff => {
+            0x2000..=0x2eff => {
                 let result = self.internal_data_buf;
                 self.internal_data_buf = self.vram[self.mirror_vram_addr(addr) as usize];
                 result
             }
-            // 0x3000..=0x3eff => panic!("addr space 0x3000..0x3eff is not expected to be used"),
+            0x3000..=0x3eff => unimplemented!("addr {} shouldn't be used in reality", addr),
+
+            //Addresses $3F10/$3F14/$3F18/$3F1C are mirrors of $3F00/$3F04/$3F08/$3F0C
+            0x3f10 | 0x3f14 | 0x3f18 | 0x3f1c => {
+                let add_mirror = addr - 0x10;
+                self.palette_table[(add_mirror - 0x3f00) as usize]
+            }
             0x3f00..=0x3fff => self.palette_table[(addr - 0x3f00) as usize],
             _ => panic!("unexpected access to mirrored space {}", addr),
         }
@@ -246,31 +214,6 @@ impl NesPPU {
 
     pub fn write_to_ppu_data(&mut self, data: u8) {
         self.write_to_ppu_data_with_inc(data, true);
-    }
-
-    pub fn direct_write_to_ppu_data(&mut self, data: u8) {
-        let addr = self.addr.get();
-
-        match addr {
-            0..=0x1fff => {
-                self.chr_rom[addr as usize] = data;
-                self.internal_data_buf = data;
-            }
-            0x2000..=0x2fff => {
-                self.vram[self.mirror_vram_addr(addr) as usize] = data;
-                self.internal_data_buf = data;
-            }
-            0x3000..=0x3eff => panic!("addr space 0x3000..0x3eff is not expected to be used"),
-            //Addresses $3F10/$3F14/$3F18/$3F1C are mirrors of $3F00/$3F04/$3F08/$3F0C
-            0x3f10 | 0x3f14 | 0x3f18 | 0x3f1c => {
-                let add_mirror = addr - 0x10;
-                self.palette_table[(add_mirror - 0x3f00) as usize] = data;
-            }
-            0x3f00..=0x3fff => {
-                self.palette_table[(addr - 0x3f00) as usize] = data;
-            }
-            _ => panic!("unexpected access to mirrored space {}", addr),
-        }
     }
 
     fn write_to_ppu_data_with_inc(&mut self, data: u8, with_inc: bool) {

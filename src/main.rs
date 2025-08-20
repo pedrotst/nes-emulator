@@ -4,15 +4,18 @@ pub mod cartridge;
 pub mod cpu;
 pub mod opcodes;
 pub mod ppu;
-pub mod trace;
 pub mod render;
+pub mod trace;
 
+use bus::Bus;
 use bus::BusOP;
 use cartridge::Rom;
 use cpu::CPU;
 use cpu::Mem;
+use ppu::NesPPU;
 use render::frame::Frame;
 use render::palette;
+use trace::trace;
 
 // use rand::Rng;
 use sdl2::EventPump;
@@ -20,7 +23,6 @@ use sdl2::event::Event;
 use sdl2::keyboard::Keycode;
 use sdl2::pixels::Color;
 use sdl2::pixels::PixelFormatEnum;
-use sdl2::rect::Rect;
 
 use std::path::Path;
 
@@ -52,7 +54,6 @@ fn main() {
     let bytes = std::fs::read(path).unwrap();
     let rom = Rom::new(&bytes).unwrap();
 
-    /*
     let mut frame = Frame::new();
 
     let bus = Bus::new(rom, move |ppu: &NesPPU| {
@@ -71,72 +72,14 @@ fn main() {
                 _ => { /* Do Nothing */ }
             }
         }
-
     });
     let mut cpu = CPU::new(bus);
+    println!("resetting");
     cpu.reset();
-    cpu.run();
-    */
-
-    for y in 0..=11 {
-        for x in 0..=19 {
-            let tile_frame = show_tile(&rom.chr_rom, 1, (y * 20)+ x);
-            let rect = Rect::new((x * 9) as i32, (y * 9) as i32, 8, 8);
-            texture.update(rect, &tile_frame.data, 256 * 3).unwrap();
-            canvas.copy(&texture, None, None).unwrap();
-        }
-    }
-
-    canvas.present();
-
-
-    loop {
-        for event in event_pump.poll_iter() {
-            match event {
-                Event::Quit { .. }
-                | Event::KeyDown {
-                    keycode: Some(Keycode::Escape),
-                    ..
-                } => std::process::exit(0),
-                _ => { /* Do Nothing */ }
-            }
-        }
-    }
-
-    /*
-    let mut file = File::open(&path).unwrap();
-    let mut buffer = Vec::new();
-    file.read_to_end(&mut buffer).unwrap();
-
-    let rom = Rom::new(&buffer).unwrap();
-    let bus = Bus::new(rom);
-
-    let mut cpu = CPU::new(bus);
-    // cpu.load(game_code);
-    // cpu.load(program);
-    cpu.reset();
-    cpu.program_counter = 0xC000;
-    */
-
-    /*
-    cpu.run_with_callback(move |cpu| {
+    println!("running");
+    cpu.run_with_callback(|cpu| {
         println!("{}", trace(cpu));
     });
-    let mut screen_state = [0 as u8; 32 * 3 * 32];
-    let mut rng = rand::thread_rng();
-    cpu.run_with_callback(move |cpu| {
-        // println!("{}", trace(cpu));
-        println!(trace(cpu));
-        handle_user_input(cpu,&mut event_pump);
-        cpu.mem_write(0xfe, rng.gen_range(1, 16));
-
-        if read_screen_state(cpu, &mut screen_state) {
-            texture.update(None, &screen_state, 32 * 3).unwrap();
-            canvas.copy(&texture, None, None).unwrap();
-            canvas.present();
-        }
-        ::std::thread::sleep(std::time::Duration::new(0, 70_000));
-    });*/
 }
 
 #[allow(dead_code)]
@@ -232,6 +175,7 @@ fn read_screen_state<T: BusOP>(mut cpu: CPU<T>, frame: &mut [u8; 32 * 3 * 32]) -
     update
 }
 
+#[allow(dead_code)]
 fn show_tile(chr_rom: &Vec<u8>, bank: usize, tile_n: usize) -> Frame {
     assert!(bank <= 1);
 

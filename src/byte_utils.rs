@@ -71,8 +71,8 @@ pub fn set_negative(flags: &mut u8) {
 }
 
 pub fn set_interrupt(flags: &mut u8) {
-    *flags &= 0b1101_1111;
-    *flags |= 0b0001_0000;
+    *flags &= 0b1110_1111;
+    *flags |= 0b0010_0000;
 }
 
 /* ============ Unset Flags ============== */

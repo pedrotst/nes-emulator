@@ -51,4 +51,13 @@ impl PPUSTATUS {
         }
     }
 
+    pub fn set_sprite_zero_hit(&mut self, b: bool) {
+        if b {
+            self.insert(PPUSTATUS::SPRITE_0_HIT);
+        }
+        else {
+            self.remove(PPUSTATUS::SPRITE_0_HIT);
+        }
+    }
+
 }
